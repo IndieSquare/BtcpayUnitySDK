@@ -153,7 +153,7 @@ namespace BitPayAPI
         public string Status { get; set; }
         public bool ShouldSerializeStatus() { return false; }
 
-        public double BtcPrice { get; set; }
+        public double? BtcPrice { get; set; }
         public bool ShouldSerializeBtcPrice() { return false; }
 
         public long InvoiceTime { get; set; }
@@ -165,10 +165,10 @@ namespace BitPayAPI
         public long CurrentTime { get; set; }
         public bool ShouldSerializeCurrentTime() { return false; }
 
-        public double BtcPaid { get; set; }
+        public double? BtcPaid { get; set; }
         public bool ShouldSerializeBtcPaid() { return false; }
 
-        public double BtcDue { get; set; }
+        public double? BtcDue { get; set; }
         public bool ShouldSerializeBtcDue() { return false; }
 
         public List<InvoiceTransaction> Transactions { get; set; }
@@ -195,6 +195,11 @@ namespace BitPayAPI
         [Newtonsoft.Json.JsonProperty]
         private Flags Flags { get; set; }
         public bool ShouldSerializeFlags() { return false; }
+
+        public List<InvoiceCryptoInfo> CryptoInfo { get; set; }
+        public bool ShouldSerializeCryptoInfo() { return false; }
+
+
     }
 
     class Flags

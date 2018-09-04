@@ -36,7 +36,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="BitCoinSharp">
-      <HintPath>..\redist\BitCoinSharp.dll</HintPath>
+      <HintPath>..\..\csharp-bitpay-client-master\BTCPayClient\redist\BitCoinSharp.dll</HintPath>
     </Reference>
     <Reference Include="System" />
   </ItemGroup>

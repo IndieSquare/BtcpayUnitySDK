@@ -97,7 +97,7 @@ namespace BitPayTest
             try
             {
                 Invoice invoice = this.bitpay.createInvoice(new Invoice(0.1, "BTC"));
-                Assert.AreEqual(0.1, invoice.BtcPrice, 0.0000001, "Invoice not created correctly: 0.1BTC");
+                Assert.AreEqual(0.1, invoice.BtcPrice,  "Invoice not created correctly: 0.1BTC");
             }
             catch (Exception ex)
             {

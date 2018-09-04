@@ -27,7 +27,8 @@ namespace BitPayAPI
     {
         private const String BITPAY_API_VERSION = "2.0.0";
         private const String BITPAY_PLUGIN_INFO = "BitPay CSharp Client " + BITPAY_API_VERSION;
-        private const String BITPAY_URL = "https://bitpay.com/";
+        //        private const String BITPAY_URL = "https://bitpay.com/";
+        private const String BITPAY_URL = "https://btcpaytest.indiesquare.net/";
 
         public const String FACADE_PAYROLL  = "payroll";
         public const String FACADE_POS = "pos";
@@ -158,10 +159,11 @@ namespace BitPayAPI
         /// <returns>A new invoice object returned from the server.</returns>
         public Invoice createInvoice(Invoice invoice, String facade = FACADE_POS)
         {
-            invoice.Token = this.getAccessToken(facade);
+            invoice.Token = this.getAccessToken(facade);//get token by facade type
             invoice.Guid = Guid.NewGuid().ToString();
             String json = JsonConvert.SerializeObject(invoice);
             HttpResponseMessage response = this.postWithSignature("invoices", json);
+            String invoiceStr = this.responseToJsonString(response);
             JsonConvert.PopulateObject(this.responseToJsonString(response), invoice);
 
             // Track the token for this invoice
