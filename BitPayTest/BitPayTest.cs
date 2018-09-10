@@ -1,4 +1,4 @@
-﻿using BitPayAPI;
+﻿using BTCPayAPI;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 
@@ -7,7 +7,7 @@ namespace BitPayTest
     [TestClass]
     public class BitPayTest
     {
-        private BitPay bitpay;
+        private BTCPay bitpay;
         private Invoice basicInvoice;
 
         private static String pairingCode = "6UgaJ6W";
@@ -18,9 +18,9 @@ namespace BitPayTest
             try
             {
                 // This scenario qualifies that this (test) client does not have merchant facade access.
-                bitpay = new BitPay(clientName);
+                bitpay = new BTCPay(clientName);
 
-                if (!bitpay.clientIsAuthorized(BitPay.FACADE_POS))
+                if (!bitpay.clientIsAuthorized(BTCPay.FACADE_POS))
                 {
                     // Get POS facade authorization.
                     // Obtain a pairingCode from your BitPay account administrator.  When the pairingCode

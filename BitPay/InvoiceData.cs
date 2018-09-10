@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace BitPayAPI
+namespace BTCPayAPI
 {
     public class InvoiceData
     {

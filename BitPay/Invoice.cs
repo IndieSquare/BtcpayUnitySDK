@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Web.Script.Serialization;
 
-namespace BitPayAPI
+namespace BTCPayAPI
 {
     public class Invoice
     {

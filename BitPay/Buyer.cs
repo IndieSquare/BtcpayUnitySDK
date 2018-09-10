@@ -1,7 +1,7 @@
 ﻿using Newtonsoft.Json;
 using System;
 
-namespace BitPayAPI
+namespace BTCPayAPI
 {
     /// <summary>
     /// Provides an interface to a buyer.

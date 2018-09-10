@@ -2,7 +2,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace BitPayAPI
+namespace BTCPayAPI
 {
     /// <summary>
     /// Provides an interface to the BitPay server for the token resource.

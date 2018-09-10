@@ -1,4 +1,4 @@
-﻿namespace BitPayAPI
+﻿namespace BTCPayAPI
 {
     public class RefundInfo
     {

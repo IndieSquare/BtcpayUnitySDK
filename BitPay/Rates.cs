@@ -3,17 +3,17 @@ using System.Collections.Generic;
 using System.Net.Http;
 using System.Web.Helpers;
 
-namespace BitPayAPI
+namespace BTCPayAPI
 {
     /// <summary>
     /// Provides an interface to the BitPay server to obtain exchange rate information.
     /// </summary>
     public class Rates
     {
-        private BitPay _bp;
+        private BTCPay _bp;
         private List<Rate> _rates;
 
-        public Rates(List<Rate> rates, BitPay bp)
+        public Rates(List<Rate> rates, BTCPay bp)
         {
             _bp = bp;
             _rates = rates;

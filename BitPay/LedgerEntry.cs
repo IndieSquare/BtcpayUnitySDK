@@ -2,7 +2,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace BitPayAPI
+namespace BTCPayAPI
 {
     public class LedgerEntry
     {

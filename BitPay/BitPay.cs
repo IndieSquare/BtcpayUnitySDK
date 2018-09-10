@@ -12,7 +12,10 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Web.Helpers;
 using System.Web.Script.Serialization;
-
+using System.Net;
+using System.Threading;
+using System.Threading.Tasks;
+using WebSocketSharp;
 /**
  * @author Andy Phillipson
  * @date 9.3.2014
@@ -20,21 +23,24 @@ using System.Web.Script.Serialization;
  * See bitpay.com/api for more information.
  */
 
-namespace BitPayAPI
+namespace BTCPayAPI
 {
 
-    public class BitPay
+    public class BTCPay
     {
         private const String BITPAY_API_VERSION = "2.0.0";
-        private const String BITPAY_PLUGIN_INFO = "BitPay CSharp Client " + BITPAY_API_VERSION;
+        private const String BITPAY_PLUGIN_INFO = "BTCPay CSharp Client " + BITPAY_API_VERSION;
         //        private const String BITPAY_URL = "https://bitpay.com/";
-        private const String BITPAY_URL = "https://btcpaytest.indiesquare.net/";
+//        public const String HOST = "btcpaytest.indiesquare.net";
+        public const String HOST = "btcpayreg.indiesquare.net";
+        private const String BITPAY_URL = "https://"+HOST+"/";
 
         public const String FACADE_PAYROLL  = "payroll";
         public const String FACADE_POS = "pos";
         public const String FACADE_MERCHANT = "merchant";
         public const String FACADE_USER = "user";
 
+        private String _serverHost = null;
         private HttpClient _httpClient = null;
         private String _baseUrl = BITPAY_URL;
         private EcKey _ecKey = null;
@@ -42,14 +48,25 @@ namespace BitPayAPI
         private String _clientName = "";
         private Dictionary<string, string> _tokenCache; // {facade, token}
 
+        private List<WebSocket> _wsList = new List<WebSocket>();
+        private String pairingCode = "";
+
         /// <summary>
         /// Constructor for use if the keys and SIN are managed by this library.
         /// </summary>
+        /// <param name="pairCode">Server driven pairing code from BTCPay server</param>
         /// <param name="clientName">The label for this client.</param>
         /// <param name="envUrl">The target server URL.</param>
-        public BitPay(String clientName = BITPAY_PLUGIN_INFO, String envUrl = BITPAY_URL)
+        public BTCPay(String pairCode="", String serverhost = HOST, String clientName = BITPAY_PLUGIN_INFO)
         {
+            if (pairCode == "")
+            {
+                throw new Exception("Server initiated Pairing code is mandatory.BTCPay->Stores->Settings->Access Token->Create New Token(Pubkey to be blank) ");
+            }
             // IgnoreBadCertificates();
+            this.pairingCode = pairCode;
+
+            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
 
             if (clientName.Equals(BITPAY_PLUGIN_INFO))
             {
@@ -61,14 +78,22 @@ namespace BitPayAPI
             {
                 _clientName = _clientName.Substring(0, 60);
             }
-
-            _baseUrl = envUrl;
+            _serverHost = serverhost;
+            _baseUrl = "https://" + _serverHost + "/"; 
     	    _httpClient = new HttpClient();
             _httpClient.BaseAddress = new Uri(_baseUrl);
 
-            this.initKeys();
-            this.deriveIdentity();
+            this.initKeys();//Private Key load or create anew
+            this.deriveIdentity();//compute SIN number from pubkey
             this.tryGetAccessTokens();
+
+            // Is this client already authorized to use the POS facade?
+            if (!clientIsAuthorized(BTCPay.FACADE_MERCHANT))
+            {
+                // Get POS facade authorization.
+                authorizeClient(pairingCode);
+            }
+
         }
 
         /// <summary>
@@ -77,7 +102,7 @@ namespace BitPayAPI
         /// <param name="ecKey">An elliptical curve key.</param>
         /// <param name="clientName">The label for this client.</param>
         /// <param name="envUrl">The target server URL.</param>
-        public BitPay(EcKey ecKey, String clientName = BITPAY_PLUGIN_INFO, String envUrl = BITPAY_URL)
+        public BTCPay(EcKey ecKey, String clientName = BITPAY_PLUGIN_INFO, String envUrl = BITPAY_URL)
         {
             // IgnoreBadCertificates();
 
@@ -198,6 +223,49 @@ namespace BitPayAPI
             HttpResponseMessage response = this.get("invoices/" + invoiceId, parameters);
             return JsonConvert.DeserializeObject<Invoice>(this.responseToJsonString(response));
         }
+
+        public async Task<Invoice> GetInvoiceAsync(String invoiceId)
+        {
+            return await Task.Run( () => getInvoiceByWS(invoiceId));
+        }
+
+        private Invoice getInvoiceByWS(String invoiceId)
+        {
+            Invoice inv = null;
+            //WebSocket  loop
+            using (var ws = new WebSocket("wss://" + _serverHost + "/i/" + invoiceId + "/status/ws"))
+            {
+                ws.SslConfiguration.EnabledSslProtocols = System.Security.Authentication.SslProtocols.Tls12;
+                ws.OnMessage += (sender, e) =>
+                {
+                    Console.WriteLine("WS Message: " + e.Data);
+                    //Get Invoice 
+                    inv = getInvoice(invoiceId, BTCPay.FACADE_MERCHANT);
+                    ws.Close();
+                };
+                ws.OnClose += (sender, e) =>
+                {
+                    //Console.WriteLine("WS Closed: " + e.Code);
+                };
+                ws.OnError += (sender, e) =>
+                {
+                    //Console.WriteLine("WS Err: " + e.Exception);
+                };
+                ws.OnOpen += (sender, e) =>
+                  Console.WriteLine("WS Opened.");
+
+                ws.Connect();
+
+                while (ws.IsAlive)
+                {
+                    Thread.Sleep(500);
+                    Console.WriteLine("Sleep 500ms.");
+                }
+            }//Close websocket
+            return inv;
+
+        }
+
 
         /// <summary>
         /// Retrieve a list of invoices by date range using the merchant facade.
@@ -495,7 +563,7 @@ namespace BitPayAPI
 
         private int getAccessTokens()
         {
-            this.clearAccessTokenCache();
+            this.clearAccessTokenCache();//empty token map
             Dictionary<String, String> parameters = this.getParams();
             HttpResponseMessage response = this.get("tokens", parameters);
             _tokenCache = responseToTokenCache(response);
@@ -677,5 +745,6 @@ namespace BitPayAPI
             Encoding.ASCII.GetChars(asciiBytes, 0, asciiBytes.Length, asciiChars, 0);
             return new String(asciiChars);
         }
+
     }
 }

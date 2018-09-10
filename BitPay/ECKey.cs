@@ -7,7 +7,7 @@ using Org.BouncyCastle.Crypto.Parameters;
 using System;
 using System.IO;
 
-namespace BitPayAPI
+namespace BTCPayAPI
 {
     public class ECKey
     {

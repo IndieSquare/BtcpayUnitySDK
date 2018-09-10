@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace BitPayAPI
+namespace BTCPayAPI
 {
     /// <summary>
     /// Provides an API specific exception handler.

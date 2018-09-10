@@ -1,6 +1,6 @@
 ﻿using Newtonsoft.Json;
 
-namespace BitPayAPI
+namespace BTCPayAPI
 {
     /// <summary>
     /// Provides information about a single invoice transaction.

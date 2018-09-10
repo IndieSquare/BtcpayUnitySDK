@@ -5,7 +5,7 @@ using System.Text;
 using System.IO;
 using System.Security.Cryptography;
 
-namespace BitPayAPI
+namespace BTCPayAPI
 {
     public class KeyUtils
     {

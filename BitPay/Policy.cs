@@ -2,7 +2,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace BitPayAPI
+namespace BTCPayAPI
 {
     /// <summary>
     /// Provides BitPay token policy information.

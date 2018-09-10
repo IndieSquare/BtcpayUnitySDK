@@ -1,4 +1,4 @@
-﻿using BitPayAPI;
+﻿using BTCPayAPI;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
@@ -8,7 +8,7 @@ namespace BitPayTest
     [TestClass]
     public class BitPayTest2
     {
-        private BitPay bitpay;
+        private BTCPay bitpay;
         private static String clientName = "BitPay C# Library Tester on " + System.Environment.MachineName;
 
         public BitPayTest2()
@@ -19,15 +19,15 @@ namespace BitPayTest
 		        // The first time this test runs it will create an identity and emit a client pairing code.
 		        // The pairing code must then be authorized in a BitPay account.  Running the test a second
 		        // time should result in the authorized client (this test) running to completion.
-                bitpay = new BitPay(clientName);
+                bitpay = new BTCPay(clientName);
         
-                if (!bitpay.clientIsAuthorized(BitPay.FACADE_MERCHANT))
+                if (!bitpay.clientIsAuthorized(BTCPay.FACADE_MERCHANT))
                 {
                     // Get POS facade authorization code.
                     // Obtain a pairingCode from the BitPay server.  The pairingCode must be emitted from
         	        // this device and input into and approved by the desired merchant account.  To
         	        // generate invoices a POS facade is required.
-                    String pairingCode = bitpay.requestClientAuthorization(BitPay.FACADE_MERCHANT);
+                    String pairingCode = bitpay.requestClientAuthorization(BTCPay.FACADE_MERCHANT);
 
                     // Signal the device operator that this client needs to be paired with a merchant account.
                     System.Diagnostics.Debug.WriteLine("Info: Pair this client with your merchant account using the pairing code: " + pairingCode);
@@ -45,8 +45,8 @@ namespace BitPayTest
         {
             try
             {
-                Invoice invoice = bitpay.createInvoice(new Invoice(1.0, "USD"), BitPay.FACADE_MERCHANT);
-                invoice = bitpay.getInvoice(invoice.Id, BitPay.FACADE_MERCHANT);
+                Invoice invoice = bitpay.createInvoice(new Invoice(1.0, "USD"), BTCPay.FACADE_MERCHANT);
+                invoice = bitpay.getInvoice(invoice.Id, BTCPay.FACADE_MERCHANT);
                 Assert.IsNotNull(invoice.Id, "Invoice created with id=NULL");
             }
             catch (Exception ex)
