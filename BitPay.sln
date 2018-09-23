@@ -3,13 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
 VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BitPay", "BitPay\BitPay.csproj", "{D88A49C3-0280-4320-B120-AE519B2DB219}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BtcPayService", "BtcPayService\BtcPayService.csproj", "{D88A49C3-0280-4320-B120-AE519B2DB219}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BitPayTest", "BitPayTest\BitPayTest.csproj", "{71166BF5-DA31-4BFD-90E6-16172E894EAA}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BtcPayServiceTest", "BtcPayServiceTest\BtcPayServiceTest.csproj", "{71166BF5-DA31-4BFD-90E6-16172E894EAA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BitBayClient", "BitBayClient\BitBayClient.csproj", "{7069D12D-4D07-4CE4-A0BF-406D599CD2F0}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BtcPay", "BtcPay\BtcPay.csproj", "{DC3AB0C9-1149-4764-A150-094783C746A9}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BtcPayClient", "BtcPayClient\BtcPayClient.csproj", "{7069D12D-4D07-4CE4-A0BF-406D599CD2F0}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -29,10 +27,6 @@ Global
 		{7069D12D-4D07-4CE4-A0BF-406D599CD2F0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7069D12D-4D07-4CE4-A0BF-406D599CD2F0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7069D12D-4D07-4CE4-A0BF-406D599CD2F0}.Release|Any CPU.Build.0 = Release|Any CPU
-		{DC3AB0C9-1149-4764-A150-094783C746A9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{DC3AB0C9-1149-4764-A150-094783C746A9}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{DC3AB0C9-1149-4764-A150-094783C746A9}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{DC3AB0C9-1149-4764-A150-094783C746A9}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

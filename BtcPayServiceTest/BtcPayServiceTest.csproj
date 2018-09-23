@@ -6,8 +6,8 @@
     <ProjectGuid>{71166BF5-DA31-4BFD-90E6-16172E894EAA}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>BitPayTest</RootNamespace>
-    <AssemblyName>BitPayTest</AssemblyName>
+    <RootNamespace>BtcPayTest</RootNamespace>
+    <AssemblyName>BtcPayTest</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{3AC096D0-A1C2-E12C-1390-A8335801FDAB};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
@@ -36,7 +36,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="BitCoinSharp">
-      <HintPath>..\..\csharp-bitpay-client-master\BTCPayClient\redist\BitCoinSharp.dll</HintPath>
+      <HintPath>..\packages\BitCoinSharp.0.2.166.49\lib\BitCoinSharp.dll</HintPath>
     </Reference>
     <Reference Include="System" />
   </ItemGroup>
@@ -59,7 +59,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\BitPay\BitPay.csproj">
+    <ProjectReference Include="..\BtcPayService\BtcPayService.csproj">
       <Project>{d88a49c3-0280-4320-b120-ae519b2db219}</Project>
       <Name>BitPay</Name>
     </ProjectReference>

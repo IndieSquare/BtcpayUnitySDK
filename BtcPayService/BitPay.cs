@@ -1,21 +1,22 @@
 using BitCoinSharp;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
-using Newtonsoft.Json.Linq;
-using Newtonsoft.Json.Serialization;
-using System;
+using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using System;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Web.Helpers;
-using System.Web.Script.Serialization;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using WebSocketSharp;
+using UnityEngine;
+using ZXing;
+using ZXing.QrCode;
+using BtcPayApi;
+
 /**
  * @author Andy Phillipson
  * @date 9.3.2014
@@ -463,6 +464,82 @@ namespace BTCPayAPI
             return JsonConvert.DeserializeObject<Settlement>(responseToJsonString(response));
         }
 
+        public IEnumerator subscribeInvoice(string invoiceId, Action<Invoice> actionOnInvoice, MonoBehaviour mb)
+        {
+            CoroutineWithData cd = new CoroutineWithData(mb, SubscribeInvoiceCoroutine(invoiceId));
+            yield return cd.coroutine;
+
+            Debug.Log("BtcPayUnity: Invoice Result is " + cd.result);
+
+            Invoice resultInv = (Invoice)cd.result;
+            actionOnInvoice(resultInv);
+        }
+
+        private IEnumerator SubscribeInvoiceCoroutine(string invoiceId)
+        {
+            Invoice inv = null;
+//            string _serverHost = "btcpayreg.indiesquare.net";
+            //WebSocket  loop
+            using (var ws = new WebSocket("wss://" + _serverHost + "/i/" + invoiceId + "/status/ws"))
+            {
+                ws.SslConfiguration.EnabledSslProtocols = System.Security.Authentication.SslProtocols.Tls12;
+                ws.OnMessage += (sender, e) =>
+                {
+                    Debug.Log("BtcPayUnity:WS Message: " + e.Data);
+                    //Get Invoice 
+                    //                inv = getInvoice(invoiceId, BTCPay.FACADE_MERCHANT);
+                    inv = getInvoice(invoiceId, BTCPay.FACADE_MERCHANT);
+                    Debug.Log("BtcPayUnity:Got invoice : " + inv.Status);
+                    ws.Close();
+                };
+                ws.OnClose += (sender, e) =>
+                {
+                    //Console.WriteLine("WS Closed: " + e.Code);
+                };
+                ws.OnError += (sender, e) =>
+                {
+                    //Console.WriteLine("WS Err: " + e.Exception);
+                };
+                ws.OnOpen += (sender, e) =>
+                  Debug.Log("BtcPayUnity:WS Opened.");
+
+                ws.Connect();
+
+                //Wait connection is closed when invoice is gotten or exception
+                while (ws.IsAlive)
+                {
+                    //Thread.Sleep(500);
+                    yield return new WaitForSeconds(0.5f);
+                    Debug.Log("BtcPayUnity:Websocket Sleep 500ms.");
+                }
+            }//Close websocket
+            yield return inv;
+        }
+
+        private static Color32[] Encode(string textForEncoding,
+          int width, int height)
+        {
+            var writer = new BarcodeWriter
+            {
+                Format = BarcodeFormat.QR_CODE,
+                Options = new QrCodeEncodingOptions
+                {
+                    Height = height,
+                    Width = width
+                }
+            };
+            return writer.Write(textForEncoding);
+        }
+        public Texture2D generateQR(string text)
+        {
+            var encoded = new Texture2D(384, 384);
+            var color32 = Encode(text, encoded.width, encoded.height);
+            encoded.SetPixels32(color32);
+            encoded.Apply();
+            return encoded;
+        }
+
+
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -492,26 +569,28 @@ namespace BTCPayAPI
         private Dictionary<string, string> responseToTokenCache(HttpResponseMessage response)
         {
             // The response is expected to be an array of key/value pairs (facade name = token).
-            dynamic obj = Json.Decode(responseToJsonString(response));
+            dynamic obj = JsonConvert.DeserializeObject(responseToJsonString(response));
 
-            if (obj.GetType() != typeof(DynamicJsonArray))
+//            if (obj.GetType() != typeof(DynamicJsonArray))
+            if (obj.GetType() != typeof(JArray))//TODO Fix the Type CHECK
             {
                 throw new BitPayException("Error: Response to GET /tokens is expected to be an array, got a " + obj.GetType());
             }
             try
             {
-                for (int i = 0; i < obj.Length; i++)
+//                for (int i = 0; i < obj.Count; i++)
+                foreach(var kc in obj.Children())
                 {
-                    Dictionary<string, object>.KeyCollection kc = obj[i].GetDynamicMemberNames();
+//                    Dictionary<string, object>.KeyCollection kc = obj[i].GetDynamicMemberNames();
                     if (kc.Count > 1)
                     {
                         throw new BitPayException("Error: Size of Token object is unexpected.  Expected one entry, got " + kc.Count + " entries.");
                     }
-                    foreach (string key in kc)
+                    foreach (var entry in kc)
                     {
-                        if (!_tokenCache.ContainsKey(key))
+                        if (!_tokenCache.ContainsKey(entry.Name))
                         {
-                            cacheToken(key, obj[i][key]);
+                            cacheToken(entry.Name, entry.Value.Value);
                         }
                     }
                 }
@@ -686,7 +765,7 @@ namespace BTCPayAPI
             // An error(s) object raises an exception.
             // A data object has its content extracted (throw away the data wrapper object).
             String responseString = response.Content.ReadAsStringAsync().Result;
-            dynamic obj = Json.Decode(responseString);
+            dynamic obj = JsonConvert.DeserializeObject(responseString);
 
             // Check for error response.
             if (dynamicObjectHasProperty(obj, "error"))
@@ -714,10 +793,15 @@ namespace BTCPayAPI
         private static bool dynamicObjectHasProperty(dynamic obj, string name)
         {
             bool result = false;
-            if (obj.GetType() == typeof(DynamicJsonObject))
+
+            //            if (obj.GetType() == typeof(DynamicJsonObject))
+            if (obj.GetType() == typeof(JObject))//TODO Fix the Type CHECK
             {
-                Dictionary<string, object>.KeyCollection kc = obj.GetDynamicMemberNames();
-                result = kc.Contains(name);
+                var dataValue = obj["data"];
+                var errorValue = obj[name];
+                result = errorValue != null;
+                //Dictionary<string, object>.KeyCollection kc = obj.GetDynamicMemberNames();
+                //result = kc.Contains(name);
             }
             return result;
         }
@@ -747,4 +831,5 @@ namespace BTCPayAPI
         }
 
     }
+
 }

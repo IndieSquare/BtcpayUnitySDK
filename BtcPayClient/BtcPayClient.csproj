@@ -7,8 +7,8 @@
     <ProjectGuid>{7069D12D-4D07-4CE4-A0BF-406D599CD2F0}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>BitBayClient</RootNamespace>
-    <AssemblyName>BitBayClient</AssemblyName>
+    <RootNamespace>BtcPayClient</RootNamespace>
+    <AssemblyName>BtcPayClient</AssemblyName>
     <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
@@ -58,7 +58,7 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\BitPay\BitPay.csproj">
+    <ProjectReference Include="..\BtcPayService\BtcPayService.csproj">
       <Project>{d88a49c3-0280-4320-b120-ae519b2db219}</Project>
       <Name>BitPay</Name>
     </ProjectReference>
