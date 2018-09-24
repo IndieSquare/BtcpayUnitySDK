@@ -8,7 +8,7 @@
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>BtcPayClient</RootNamespace>
-    <AssemblyName>BtcPayClient</AssemblyName>
+    <AssemblyName>BtcPayClientSample</AssemblyName>
     <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
@@ -58,9 +58,9 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\BtcPayService\BtcPayService.csproj">
+    <ProjectReference Include="..\BtcPayService\BtcPayClient.csproj">
       <Project>{d88a49c3-0280-4320-b120-ae519b2db219}</Project>
-      <Name>BitPay</Name>
+      <Name>BtcPayClient</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

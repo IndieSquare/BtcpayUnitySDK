@@ -7,7 +7,7 @@ namespace BitPayTest
     [TestClass]
     public class BitPayTest
     {
-        private BTCPay bitpay;
+        private BTCPayClient bitpay;
         private Invoice basicInvoice;
 
         private static String pairingCode = "6UgaJ6W";
@@ -18,9 +18,9 @@ namespace BitPayTest
             try
             {
                 // This scenario qualifies that this (test) client does not have merchant facade access.
-                bitpay = new BTCPay(clientName);
+                bitpay = new BTCPayClient(clientName);
 
-                if (!bitpay.clientIsAuthorized(BTCPay.FACADE_POS))
+                if (!bitpay.clientIsAuthorized(BTCPayClient.FACADE_POS))
                 {
                     // Get POS facade authorization.
                     // Obtain a pairingCode from your BitPay account administrator.  When the pairingCode

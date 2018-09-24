@@ -10,10 +10,10 @@ namespace BTCPayAPI
     /// </summary>
     public class Rates
     {
-        private BTCPay _bp;
+        private BTCPayClient _bp;
         private List<Rate> _rates;
 
-        public Rates(List<Rate> rates, BTCPay bp)
+        public Rates(List<Rate> rates, BTCPayClient bp)
         {
             _bp = bp;
             _rates = rates;

@@ -15,7 +15,7 @@ namespace BTCBayTestClient
         static void Main(string[] args)
         {
             String pairingCode = "vT5iJ1b";
-            BTCPay bitpay = new BTCPay(pairingCode);
+            BTCPayClient bitpay = new BTCPayClient(pairingCode);
 
             //New Invoice Prep
             Invoice invoice = new Invoice(1.0, "USD");
@@ -32,7 +32,7 @@ namespace BTCBayTestClient
             Console.WriteLine("Invoice Url:" + invoice.Url);
 
             //Get Invoice 
-            Invoice inv = bitpay.getInvoice(invoice.Id, BTCPay.FACADE_MERCHANT);
+            Invoice inv = bitpay.getInvoice(invoice.Id, BTCPayClient.FACADE_MERCHANT);
 
             //Subscribe Invoice to change
             Task<Invoice> t = bitpay.GetInvoiceAsync(invoice.Id);

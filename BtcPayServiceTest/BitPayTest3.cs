@@ -8,16 +8,16 @@ namespace BitPayTest
     [TestClass]
     public class BitPayTest3
     {
-        private BTCPay bitpay;
+        private BTCPayClient bitpay;
         private static String clientName = "BitPay C# Library Tester on " + System.Environment.MachineName;
 
         public BitPayTest3()
         {
             try
             {
-                bitpay = new BTCPay(clientName);
+                bitpay = new BTCPayClient(clientName);
         
-                if (!bitpay.clientIsAuthorized(BTCPay.FACADE_PAYROLL))
+                if (!bitpay.clientIsAuthorized(BTCPayClient.FACADE_PAYROLL))
                 {
                     // Get PAYROLL facade authorization.
                     // Obtain a pairingCode from your BitPay account administrator.  When the pairingCode
@@ -31,7 +31,7 @@ namespace BitPayTest
 
                     // bitpay.authorizeClient(pairingCode);
 
-                    String pairingCode = bitpay.requestClientAuthorization(BTCPay.FACADE_PAYROLL);
+                    String pairingCode = bitpay.requestClientAuthorization(BTCPayClient.FACADE_PAYROLL);
 
                     // Signal the device operator that this client needs to be paired with a merchant account.
                     System.Diagnostics.Debug.WriteLine("Info: Pair this client with your merchant account using the pairing code: " + pairingCode);

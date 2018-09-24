@@ -8,7 +8,7 @@
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>BtcPayAPI</RootNamespace>
-    <AssemblyName>BtcPay</AssemblyName>
+    <AssemblyName>BtcPayClient</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
@@ -90,7 +90,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="BitPay.cs" />
+    <Compile Include="BtcPayClient.cs" />
     <Compile Include="BitPayException.cs" />
     <Compile Include="Buyer.cs" />
     <Compile Include="Converters.cs" />

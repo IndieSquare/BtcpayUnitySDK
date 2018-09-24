@@ -59,9 +59,9 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\BtcPayService\BtcPayService.csproj">
+    <ProjectReference Include="..\BtcPayService\BtcPayClient.csproj">
       <Project>{d88a49c3-0280-4320-b120-ae519b2db219}</Project>
-      <Name>BitPay</Name>
+      <Name>BtcPayClient</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

@@ -27,7 +27,7 @@ using BtcPayApi;
 namespace BTCPayAPI
 {
 
-    public class BTCPay
+    public class BTCPayClient
     {
         private const String BITPAY_API_VERSION = "2.0.0";
         private const String BITPAY_PLUGIN_INFO = "BTCPay CSharp Client " + BITPAY_API_VERSION;
@@ -58,7 +58,7 @@ namespace BTCPayAPI
         /// <param name="pairCode">Server driven pairing code from BTCPay server</param>
         /// <param name="clientName">The label for this client.</param>
         /// <param name="envUrl">The target server URL.</param>
-        public BTCPay(String pairCode="", String serverhost = HOST, String clientName = BITPAY_PLUGIN_INFO)
+        public BTCPayClient(String pairCode="", String serverhost = HOST, String clientName = BITPAY_PLUGIN_INFO)
         {
             if (pairCode == "")
             {
@@ -89,7 +89,7 @@ namespace BTCPayAPI
             this.tryGetAccessTokens();
 
             // Is this client already authorized to use the POS facade?
-            if (!clientIsAuthorized(BTCPay.FACADE_MERCHANT))
+            if (!clientIsAuthorized(BTCPayClient.FACADE_MERCHANT))
             {
                 // Get POS facade authorization.
                 authorizeClient(pairingCode);
@@ -103,7 +103,7 @@ namespace BTCPayAPI
         /// <param name="ecKey">An elliptical curve key.</param>
         /// <param name="clientName">The label for this client.</param>
         /// <param name="envUrl">The target server URL.</param>
-        public BTCPay(EcKey ecKey, String clientName = BITPAY_PLUGIN_INFO, String envUrl = BITPAY_URL)
+        public BTCPayClient(EcKey ecKey, String clientName = BITPAY_PLUGIN_INFO, String envUrl = BITPAY_URL)
         {
             // IgnoreBadCertificates();
 
@@ -241,7 +241,7 @@ namespace BTCPayAPI
                 {
                     Console.WriteLine("WS Message: " + e.Data);
                     //Get Invoice 
-                    inv = getInvoice(invoiceId, BTCPay.FACADE_MERCHANT);
+                    inv = getInvoice(invoiceId, BTCPayClient.FACADE_MERCHANT);
                     ws.Close();
                 };
                 ws.OnClose += (sender, e) =>
@@ -488,7 +488,7 @@ namespace BTCPayAPI
                     Debug.Log("BtcPayUnity:WS Message: " + e.Data);
                     //Get Invoice 
                     //                inv = getInvoice(invoiceId, BTCPay.FACADE_MERCHANT);
-                    inv = getInvoice(invoiceId, BTCPay.FACADE_MERCHANT);
+                    inv = getInvoice(invoiceId, BTCPayClient.FACADE_MERCHANT);
                     Debug.Log("BtcPayUnity:Got invoice : " + inv.Status);
                     ws.Close();
                 };
