@@ -1,13 +1,15 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio 15
+VisualStudioVersion = 15.0.28010.2016
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BtcPayClient", "BtcPayService\BtcPayClient.csproj", "{D88A49C3-0280-4320-B120-AE519B2DB219}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BtcPayServiceTest", "BtcPayServiceTest\BtcPayServiceTest.csproj", "{71166BF5-DA31-4BFD-90E6-16172E894EAA}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BtcPayClientSample", "BtcPayClient\BtcPayClientSample.csproj", "{7069D12D-4D07-4CE4-A0BF-406D599CD2F0}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{5318CC2B-36CF-42E4-A3A3-6E09187F9887}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -30,5 +32,8 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {B35FA3C1-F2C5-4E03-96F5-82C0DA9E0B42}
 	EndGlobalSection
 EndGlobal

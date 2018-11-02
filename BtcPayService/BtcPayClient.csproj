@@ -81,10 +81,6 @@
     <Reference Include="UnityEngine">
       <HintPath>..\..\..\..\..\Program Files\Unity2018\Editor\Data\Managed\UnityEngine.dll</HintPath>
     </Reference>
-    <Reference Include="websocket-sharp, Version=1.0.2.4712, Culture=neutral, PublicKeyToken=5660b08a1845a91e, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\websocket-sharp.dll</HintPath>
-    </Reference>
     <Reference Include="zxing.unity">
       <HintPath>..\packages\zxing.unity.dll</HintPath>
     </Reference>

@@ -1,5 +1,5 @@
 using BitCoinSharp;
-using System.Collections;
+using System.Net.WebSockets;
 using System.Collections.Generic;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -11,11 +11,9 @@ using System.Text.RegularExpressions;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
-using WebSocketSharp;
 using UnityEngine;
 using ZXing;
 using ZXing.QrCode;
-using BtcPayApi;
 
 /**
  * @author Andy Phillipson
@@ -32,8 +30,7 @@ namespace BTCPayAPI
         private const String BITPAY_API_VERSION = "2.0.0";
         private const String BITPAY_PLUGIN_INFO = "BTCPay CSharp Client " + BITPAY_API_VERSION;
         //        private const String BITPAY_URL = "https://bitpay.com/";
-//        public const String HOST = "btcpaytest.indiesquare.net";
-        public const String HOST = "btcpayreg.indiesquare.net";
+        public const String HOST = "";
         private const String BITPAY_URL = "https://"+HOST+"/";
 
         public const String FACADE_PAYROLL  = "payroll";
@@ -49,8 +46,10 @@ namespace BTCPayAPI
         private String _clientName = "";
         private Dictionary<string, string> _tokenCache; // {facade, token}
 
-        private List<WebSocket> _wsList = new List<WebSocket>();
         private String pairingCode = "";
+        //        private WebSocketManager webSocketManager = new WebSocketManager();
+//        private Dictionary<string, ClientWebSocket> _wsMap = new Dictionary<string, ClientWebSocket>();
+
 
         /// <summary>
         /// Constructor for use if the keys and SIN are managed by this library.
@@ -225,48 +224,47 @@ namespace BTCPayAPI
             return JsonConvert.DeserializeObject<Invoice>(this.responseToJsonString(response));
         }
 
-        public async Task<Invoice> GetInvoiceAsync(String invoiceId)
-        {
-            return await Task.Run( () => getInvoiceByWS(invoiceId));
-        }
+        //public async Task<Invoice> GetInvoiceAsync(String invoiceId)
+        //{
+        //    return await Task.Run( () => getInvoiceByWS(invoiceId));
+        //}
 
-        private Invoice getInvoiceByWS(String invoiceId)
-        {
-            Invoice inv = null;
-            //WebSocket  loop
-            using (var ws = new WebSocket("wss://" + _serverHost + "/i/" + invoiceId + "/status/ws"))
-            {
-                ws.SslConfiguration.EnabledSslProtocols = System.Security.Authentication.SslProtocols.Tls12;
-                ws.OnMessage += (sender, e) =>
-                {
-                    Console.WriteLine("WS Message: " + e.Data);
-                    //Get Invoice 
-                    inv = getInvoice(invoiceId, BTCPayClient.FACADE_MERCHANT);
-                    ws.Close();
-                };
-                ws.OnClose += (sender, e) =>
-                {
-                    //Console.WriteLine("WS Closed: " + e.Code);
-                };
-                ws.OnError += (sender, e) =>
-                {
-                    //Console.WriteLine("WS Err: " + e.Exception);
-                };
-                ws.OnOpen += (sender, e) =>
-                  Console.WriteLine("WS Opened.");
+        //private Invoice getInvoiceByWS(String invoiceId)
+        //{
+        //    Invoice inv = null;
+        //    //WebSocket  loop
+        //    using (var ws = new WebSocketSharp.WebSocket("wss://" + _serverHost + "/i/" + invoiceId + "/status/ws"))
+        //    {
+        //        ws.SslConfiguration.EnabledSslProtocols = System.Security.Authentication.SslProtocols.Tls12;
+        //        ws.OnMessage += (sender, e) =>
+        //        {
+        //            Console.WriteLine("WS Message: " + e.Data);
+        //            //Get Invoice 
+        //            inv = getInvoice(invoiceId, BTCPayClient.FACADE_MERCHANT);
+        //            ws.Close();
+        //        };
+        //        ws.OnClose += (sender, e) =>
+        //        {
+        //            //Console.WriteLine("WS Closed: " + e.Code);
+        //        };
+        //        ws.OnError += (sender, e) =>
+        //        {
+        //            //Console.WriteLine("WS Err: " + e.Exception);
+        //        };
+        //        ws.OnOpen += (sender, e) =>
+        //          Console.WriteLine("WS Opened.");
 
-                ws.Connect();
+        //        ws.Connect();
 
-                while (ws.IsAlive)
-                {
-                    Thread.Sleep(500);
-                    Console.WriteLine("Sleep 500ms.");
-                }
-            }//Close websocket
-            return inv;
-
-        }
-
+        //        while (ws.IsAlive)
+        //        {
+        //            Thread.Sleep(500);
+        //            Console.WriteLine("Sleep 500ms.");
+        //        }
+        //    }//Close websocket
+        //    return inv;
+//
+  //      }
 
         /// <summary>
         /// Retrieve a list of invoices by date range using the merchant facade.
@@ -464,57 +462,126 @@ namespace BTCPayAPI
             return JsonConvert.DeserializeObject<Settlement>(responseToJsonString(response));
         }
 
-        public IEnumerator subscribeInvoice(string invoiceId, Action<Invoice> actionOnInvoice, MonoBehaviour mb)
+        //public IEnumerator subscribeInvoice(string invoiceId, Action<Invoice> actionOnInvoice, MonoBehaviour mb)
+        //{
+        //    CoroutineWithData cd = new CoroutineWithData(mb, SubscribeInvoiceCoroutine(invoiceId));
+        //    yield return cd.coroutine;
+
+        //    Debug.Log("BtcPayUnity: Invoice Result is " + cd.result);
+
+        //    Invoice resultInv = (Invoice)cd.result;
+        //    actionOnInvoice(resultInv);
+        //}
+        //private IEnumerator SubscribeInvoiceCoroutine(string invoiceId)
+        //{
+        //    Invoice inv = null;
+        //    //WebSocket  loop
+
+        //    using (var ws = new WebSocket("wss://" + _serverHost + "/i/" + invoiceId + "/status/ws"))
+        //    {
+        //        ws.SslConfiguration.EnabledSslProtocols = System.Security.Authentication.SslProtocols.Tls12;
+        //        ws.OnMessage += (sender, e) =>
+        //        {
+        //            Debug.Log("BtcPayUnity:WS Message: " + e.Data);
+        //            //Get Invoice 
+        //            //                inv = getInvoice(invoiceId, BTCPay.FACADE_MERCHANT);
+        //            inv = getInvoice(invoiceId, BTCPayClient.FACADE_MERCHANT);
+        //            Debug.Log("BtcPayUnity:Got invoice : " + inv.Status);
+        //            ws.Close();
+        //        };
+        //        ws.OnClose += (sender, e) =>
+        //        {
+        //            //Console.WriteLine("WS Closed: " + e.Code);
+        //        };
+        //        ws.OnError += (sender, e) =>
+        //        {
+        //            //Console.WriteLine("WS Err: " + e.Exception);
+        //        };
+        //        ws.OnOpen += (sender, e) =>
+        //          Debug.Log("BtcPayUnity:WS Opened.");
+
+        //        ws.Connect();
+
+        //        ////Wait connection is closed when invoice is gotten or exception
+        //        //while (ws.IsAlive)
+        //        //{
+        //        //    //Thread.Sleep(500);
+        //        //    yield return new WaitForSeconds(0.5f);
+        //        //    Debug.Log("BtcPayUnity:Websocket Sleep 500ms.");
+        //        //}
+        //    }//Close websocket
+        //    yield return inv;
+        //}
+
+
+        public async Task subscribeInvoiceAsync(string invoiceId, Func<Invoice, Task> actionOnInvoice)
         {
-            CoroutineWithData cd = new CoroutineWithData(mb, SubscribeInvoiceCoroutine(invoiceId));
-            yield return cd.coroutine;
 
-            Debug.Log("BtcPayUnity: Invoice Result is " + cd.result);
-
-            Invoice resultInv = (Invoice)cd.result;
-            actionOnInvoice(resultInv);
+            await SubscribeInvoiceAsync(invoiceId, actionOnInvoice);
         }
 
-        private IEnumerator SubscribeInvoiceCoroutine(string invoiceId)
+//        private async Task SubscribeInvoiceAsync(string invoiceId, Action<Invoice> actionOnInvoice)
+        private async Task SubscribeInvoiceAsync(string invoiceId, Func<Invoice,Task> actionOnInvoice)
+        {
+            Uri serverUri = new Uri("wss://" + _serverHost + "/i/" + invoiceId + "/status/ws");
+            //            ws.SslConfiguration.EnabledSslProtocols = System.Security.Authentication.SslProtocols.Tls12;
+            ClientWebSocket webSocket = null;
+            try
+            {
+                webSocket = new ClientWebSocket();
+                await webSocket.ConnectAsync(serverUri, CancellationToken.None);
+                Invoice invoice = await ReceiveAsync(webSocket, invoiceId);
+                await actionOnInvoice(invoice);
+            }
+            catch(Exception ex)
+            {
+                Debug.Log("Exception:"+ ex.ToString());
+            }
+            finally
+            {
+                if (webSocket != null) webSocket.Dispose();
+                Debug.Log("Web Socket Closed");
+            }
+
+        }
+
+        private async Task<Invoice> ReceiveAsync(ClientWebSocket webSocket,string invoiceId)
         {
             Invoice inv = null;
-//            string _serverHost = "btcpayreg.indiesquare.net";
-            //WebSocket  loop
-            using (var ws = new WebSocket("wss://" + _serverHost + "/i/" + invoiceId + "/status/ws"))
+            byte[] buffer = new byte[1024];
+            while(webSocket.State == System.Net.WebSockets.WebSocketState.Open)
             {
-                ws.SslConfiguration.EnabledSslProtocols = System.Security.Authentication.SslProtocols.Tls12;
-                ws.OnMessage += (sender, e) =>
+                WebSocketReceiveResult result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
+                if(result.MessageType == WebSocketMessageType.Close)
                 {
-                    Debug.Log("BtcPayUnity:WS Message: " + e.Data);
-                    //Get Invoice 
-                    //                inv = getInvoice(invoiceId, BTCPay.FACADE_MERCHANT);
-                    inv = getInvoice(invoiceId, BTCPayClient.FACADE_MERCHANT);
-                    Debug.Log("BtcPayUnity:Got invoice : " + inv.Status);
-                    ws.Close();
-                };
-                ws.OnClose += (sender, e) =>
-                {
-                    //Console.WriteLine("WS Closed: " + e.Code);
-                };
-                ws.OnError += (sender, e) =>
-                {
-                    //Console.WriteLine("WS Err: " + e.Exception);
-                };
-                ws.OnOpen += (sender, e) =>
-                  Debug.Log("BtcPayUnity:WS Opened.");
-
-                ws.Connect();
-
-                //Wait connection is closed when invoice is gotten or exception
-                while (ws.IsAlive)
-                {
-                    //Thread.Sleep(500);
-                    yield return new WaitForSeconds(0.5f);
-                    Debug.Log("BtcPayUnity:Websocket Sleep 500ms.");
+                   await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, CancellationToken.None);
                 }
-            }//Close websocket
-            yield return inv;
+                else
+                {
+                    Debug.Log("webSocket MessageType : " + result.MessageType);
+                    string msg = Encoding.UTF8.GetString(buffer).TrimEnd('\0');
+                    Debug.Log("Receive : " + msg);
+                    inv = getInvoice(invoiceId, BTCPayClient.FACADE_MERCHANT);
+                    Debug.Log("BtcPayUnity:Got invoice with status: " + inv.Status);
+                    break;
+                }
+            }
+            return inv;
         }
+
+
+
+        //public void printws()
+        //{
+        //    Debug.Log("Number of ws:" + _wsMap.Count);
+        //    if(_wsMap.Count> 0)
+        //    {
+        //        foreach(var entry in _wsMap)
+        //        {
+        //            Debug.Log("ws status:" + entry.Value.IsAlive);
+        //        }
+        //    }
+        //}
 
         private static Color32[] Encode(string textForEncoding,
           int width, int height)

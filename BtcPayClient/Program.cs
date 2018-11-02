@@ -14,8 +14,9 @@ namespace BTCBayTestClient
     {
         static void Main(string[] args)
         {
-            String pairingCode = "vT5iJ1b";
-            BTCPayClient bitpay = new BTCPayClient(pairingCode);
+            String pairingCode = "uGhQ6vx";
+            String host = "btcpaytest.indiesquare.net";
+            BTCPayClient bitpay = new BTCPayClient(pairingCode,host);
 
             //New Invoice Prep
             Invoice invoice = new Invoice(1.0, "USD");
@@ -35,14 +36,21 @@ namespace BTCBayTestClient
             Invoice inv = bitpay.getInvoice(invoice.Id, BTCPayClient.FACADE_MERCHANT);
 
             //Subscribe Invoice to change
-            Task<Invoice> t = bitpay.GetInvoiceAsync(invoice.Id);
-            Console.WriteLine(t.Status);
+            Task t = bitpay.subscribeInvoiceAsync(invoice.Id, printInvoice);
             t.Wait();
-            Invoice invo = t.Result;
+            Console.WriteLine(t.Status);
 
-            Console.WriteLine(invo.Url);
-            Console.WriteLine(invo.ToString());
+            Console.WriteLine(t.Status);
 
+        }
+
+        public static async Task printInvoice(Invoice invoice)
+        {
+            Console.WriteLine("payment is not completed:" + invoice.Status);
+            Console.WriteLine(invoice.Url);
+            Console.WriteLine(invoice.ToString());
+            await Task.Delay(1000);
+            return;
         }
     }
 }
