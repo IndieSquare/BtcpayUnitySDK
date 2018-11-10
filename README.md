@@ -1,17 +1,16 @@
 csharp-bitpay-client
 ==================
 
-This is the C# client library for the BitPay Payment Gateway.  This library implements BitPay's [Cryptographically Secure RESTful API](https://bitpay.com/api).
+This is the C# client library for the BTCPay for Unity. And  This is a fork from C# client library for  BitPay Payment Gateway.  This library implements BitPay's [Cryptographically Secure RESTful API](https://bitpay.com/api). BEcause BTCPay interface is designed as such.
 
 
 ## Getting Started
 
-To get up and running with our C# library quickly, see the GUIDE here: https://github.com/bitpay/csharp-bitpay-client/blob/master/GUIDE.md
+To get up and running with our C# library quickly, see the sample project repository here: https://github.com/IndieSquare/btcpayunity
 
 ## Support
 
-* https://github.com/bitpay/csharp-bitpay-client/issues
-* https://help.bitpay.com/
+* https://github.com/btcpayserver/btcpayserver
 
 ## Contribute
 
