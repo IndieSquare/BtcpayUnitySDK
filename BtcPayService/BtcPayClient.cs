@@ -88,7 +88,7 @@ namespace BTCPayAPI
             this.tryGetAccessTokens();
 
             // Is this client already authorized to use the POS facade?
-            if (!clientIsAuthorized(BTCPayClient.FACADE_MERCHANT))
+            if (!clientIsAuthorized(BTCPayClient.FACADE_POS))
             {
                 // Get POS facade authorization.
                 authorizeClient(pairingCode);
@@ -138,6 +138,7 @@ namespace BTCPayAPI
             List<Token> tokens = JsonConvert.DeserializeObject<List<Token>>(this.responseToJsonString(response));
             foreach (Token t in tokens)
             {
+                Debug.Log("t.Facade, t.Value " + t.Facade +" "+ t.Value);
                 cacheToken(t.Facade, t.Value);
             }
         }
@@ -207,12 +208,13 @@ namespace BTCPayAPI
             // Provide the merchant token when the merchant facade is being used.
             // GET/invoices expects the merchant token and not the merchant/invoice token.
             Dictionary<string, string> parameters = null;
-            if (facade == FACADE_MERCHANT)
+//            if (facade == FACADE_MERCHANT)
             {
                 try
                 {
                     parameters = new Dictionary<string, string>();
-                    parameters.Add("token", getAccessToken(FACADE_MERCHANT));
+//                    parameters.Add("token", getAccessToken(FACADE_MERCHANT));
+                    parameters.Add("token", getAccessToken(facade));
                 }
                 catch (BitPayException)
                 {
@@ -520,7 +522,6 @@ namespace BTCPayAPI
             await SubscribeInvoiceAsync(invoiceId, actionOnInvoice);
         }
 
-//        private async Task SubscribeInvoiceAsync(string invoiceId, Action<Invoice> actionOnInvoice)
         private async Task SubscribeInvoiceAsync(string invoiceId, Func<Invoice,Task> actionOnInvoice)
         {
             Uri serverUri = new Uri("wss://" + _serverHost + "/i/" + invoiceId + "/status/ws");
@@ -535,12 +536,12 @@ namespace BTCPayAPI
             }
             catch(Exception ex)
             {
-                Debug.Log("Exception:"+ ex.ToString());
+                Debug.LogError("SubscribeInvoiceAsync - Exception:" + ex.ToString());
             }
             finally
             {
                 if (webSocket != null) webSocket.Dispose();
-                Debug.Log("Web Socket Closed");
+                Debug.Log("SubscribeInvoiceAsync - Web Socket Closed");
             }
 
         }
@@ -554,16 +555,21 @@ namespace BTCPayAPI
                 WebSocketReceiveResult result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
                 if(result.MessageType == WebSocketMessageType.Close)
                 {
-                   await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, CancellationToken.None);
+                    Debug.Log("webSocket MessageType : " + result.MessageType);
+                    await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, CancellationToken.None);
+                    break;
                 }
                 else
                 {
                     Debug.Log("webSocket MessageType : " + result.MessageType);
                     string msg = Encoding.UTF8.GetString(buffer).TrimEnd('\0');
                     Debug.Log("Receive : " + msg);
-                    inv = getInvoice(invoiceId, BTCPayClient.FACADE_MERCHANT);
-                    Debug.Log("BtcPayUnity:Got invoice with status: " + inv.Status);
-                    break;
+                    inv = getInvoice(invoiceId);
+                    if(inv != null)
+                    {
+                        Debug.Log("BtcPayUnity:Got invoice with status: " + inv.Status);
+                        break;
+                    }
                 }
             }
             return inv;
@@ -832,6 +838,8 @@ namespace BTCPayAPI
             // An error(s) object raises an exception.
             // A data object has its content extracted (throw away the data wrapper object).
             String responseString = response.Content.ReadAsStringAsync().Result;
+            Debug.Log(" Json Response Detail:" + responseString);
+
             dynamic obj = JsonConvert.DeserializeObject(responseString);
 
             // Check for error response.

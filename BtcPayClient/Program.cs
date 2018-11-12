@@ -28,12 +28,12 @@ namespace BTCBayTestClient
             invoice.ItemDesc = "Test Description";
 
             //Create Invoice 
-            invoice = bitpay.createInvoice(invoice, "merchant");
+            invoice = bitpay.createInvoice(invoice);
             Console.WriteLine("Invoice Created:" + invoice.Id);
             Console.WriteLine("Invoice Url:" + invoice.Url);
 
             //Get Invoice 
-            Invoice inv = bitpay.getInvoice(invoice.Id, BTCPayClient.FACADE_MERCHANT);
+            Invoice inv = bitpay.getInvoice(invoice.Id);
 
             //Subscribe Invoice to change
             Task t = bitpay.subscribeInvoiceAsync(invoice.Id, printInvoice);

@@ -10,7 +10,7 @@ namespace BTCPayAPI
     public class KeyUtils
     {
         private static char[] hexArray = "0123456789abcdef".ToCharArray();
-        private static String PRIV_KEY_FILENAME = "bitpay_private.key";
+        private static String PRIV_KEY_FILENAME = "btcpay_private.key";
 
 	    public KeyUtils() {}
 
