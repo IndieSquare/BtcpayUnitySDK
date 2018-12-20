@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using BTCPayAPI;
 using BitCoinSharp;
 using System.Net;
-
+using UnityEngine;
 
 namespace BTCBayTestClient
 {
@@ -36,20 +36,17 @@ namespace BTCBayTestClient
             Invoice inv = bitpay.getInvoice(invoice.Id);
 
             //Subscribe Invoice to change
-            Task t = bitpay.subscribeInvoiceAsync(invoice.Id, printInvoice);
-            t.Wait();
-            Console.WriteLine(t.Status);
+            bitpay.subscribeInvoice(invoice.Id, printInvoice, new MonoBehaviour());
 
-            Console.WriteLine(t.Status);
 
         }
 
-        public static async Task printInvoice(Invoice invoice)
+        public static void printInvoice(Invoice invoice)
         {
             Console.WriteLine("payment is not completed:" + invoice.Status);
             Console.WriteLine(invoice.Url);
             Console.WriteLine(invoice.ToString());
-            await Task.Delay(1000);
+            
             return;
         }
     }

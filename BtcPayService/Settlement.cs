@@ -8,7 +8,6 @@ namespace BTCPayAPI
         public string Id { get; set; }
         public string AccountId { get; set; }
         public string Currency { get; set; }
-        public PayoutInfo PayoutInfo { get; set; }
         public string Status { get; set; }
         public DateTime DateCreated { get; set; }
         public DateTime DateExecuted { get; set; }

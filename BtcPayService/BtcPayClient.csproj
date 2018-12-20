@@ -11,6 +11,7 @@
     <AssemblyName>BtcPayClient</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -20,6 +21,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -28,6 +30,7 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="BitCoinSharp, Version=0.2.166.49, Culture=neutral, processorArchitecture=MSIL">
@@ -81,6 +84,9 @@
     <Reference Include="UnityEngine">
       <HintPath>..\..\..\..\..\Program Files\Unity2018\Editor\Data\Managed\UnityEngine.dll</HintPath>
     </Reference>
+    <Reference Include="websocket-sharp">
+      <HintPath>..\..\..\websocket-sharp\websocket-sharp\bin\Debug_Ubuntu\websocket-sharp.dll</HintPath>
+    </Reference>
     <Reference Include="zxing.unity">
       <HintPath>..\packages\zxing.unity.dll</HintPath>
     </Reference>
@@ -93,17 +99,10 @@
     <Compile Include="CoroutineWithData.cs" />
     <Compile Include="InvoiceCryptoInfo.cs" />
     <Compile Include="InvoiceData.cs" />
-    <Compile Include="PayoutInfo.cs" />
-    <Compile Include="PayoutInstructionTransaction.cs" />
-    <Compile Include="PayoutInstructionBtcSummary.cs" />
-    <Compile Include="PayoutInstruction.cs" />
-    <Compile Include="PayoutBatch.cs" />
     <Compile Include="ECKey.cs" />
     <Compile Include="Invoice.cs" />
     <Compile Include="InvoicePaymentUrls.cs" />
     <Compile Include="InvoiceTransaction.cs" />
-    <Compile Include="Ledger.cs" />
-    <Compile Include="LedgerEntry.cs" />
     <Compile Include="Policy.cs" />
     <Compile Include="KeyUtils.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

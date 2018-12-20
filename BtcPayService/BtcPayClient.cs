@@ -1,6 +1,5 @@
 using BitCoinSharp;
-using System.Net.WebSockets;
-using System.Collections.Generic;
+using System.Collections;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
@@ -9,11 +8,12 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Net;
-using System.Threading;
-using System.Threading.Tasks;
 using UnityEngine;
 using ZXing;
 using ZXing.QrCode;
+using WebSocketSharp;
+using BtcPayApi;
+using System.Collections.Generic;
 
 /**
  * @author Andy Phillipson
@@ -29,11 +29,9 @@ namespace BTCPayAPI
     {
         private const String BITPAY_API_VERSION = "2.0.0";
         private const String BITPAY_PLUGIN_INFO = "BTCPay CSharp Client " + BITPAY_API_VERSION;
-        //        private const String BITPAY_URL = "https://bitpay.com/";
         public const String HOST = "";
         private const String BITPAY_URL = "https://"+HOST+"/";
 
-        public const String FACADE_PAYROLL  = "payroll";
         public const String FACADE_POS = "pos";
         public const String FACADE_MERCHANT = "merchant";
         public const String FACADE_USER = "user";
@@ -47,9 +45,6 @@ namespace BTCPayAPI
         private Dictionary<string, string> _tokenCache; // {facade, token}
 
         private String pairingCode = "";
-        //        private WebSocketManager webSocketManager = new WebSocketManager();
-//        private Dictionary<string, ClientWebSocket> _wsMap = new Dictionary<string, ClientWebSocket>();
-
 
         /// <summary>
         /// Constructor for use if the keys and SIN are managed by this library.
@@ -95,25 +90,7 @@ namespace BTCPayAPI
             }
 
         }
-
-        /// <summary>
-        /// Constructor for use if the keys and SIN were derived external to this library.
-        /// </summary>
-        /// <param name="ecKey">An elliptical curve key.</param>
-        /// <param name="clientName">The label for this client.</param>
-        /// <param name="envUrl">The target server URL.</param>
-        public BTCPayClient(EcKey ecKey, String clientName = BITPAY_PLUGIN_INFO, String envUrl = BITPAY_URL)
-        {
-            // IgnoreBadCertificates();
-
-            _ecKey = ecKey;
-            this.deriveIdentity();
-            _baseUrl = envUrl;
-            _httpClient = new HttpClient();
-            _httpClient.BaseAddress = new Uri(_baseUrl);
-            this.tryGetAccessTokens();
-        }
-
+        
         /// <summary>
         /// Return the identity of this client.
         /// </summary>
@@ -141,31 +118,6 @@ namespace BTCPayAPI
                 Debug.Log("t.Facade, t.Value " + t.Facade +" "+ t.Value);
                 cacheToken(t.Facade, t.Value);
             }
-        }
-        
-        /// <summary>
-        /// Request authorization (a token) for this client in the specified facade.
-        /// </summary>
-        /// <param name="facade">The facade for which authorization is requested.</param>
-        /// <returns>A pairing code for this client.  This code must be used to authorize this client at BitPay.com/api-tokens.</returns>
-        public String requestClientAuthorization(String facade)
-        {
-            Token token = new Token();
-            token.Id = _identity;
-            token.Guid = Guid.NewGuid().ToString();
-            token.Facade = facade;
-            token.Count = 1;
-            token.Label = _clientName;
-            String json = JsonConvert.SerializeObject(token);
-            HttpResponseMessage response = this.post("tokens", json);
-            List<Token> tokens = JsonConvert.DeserializeObject<List<Token>>(this.responseToJsonString(response));
-            // Expecting a single token resource.
-            if (tokens.Count != 1)
-            {
-                throw new BitPayException("Error - failed to get token resource; expected 1 token, got " + tokens.Count);
-            }
-            cacheToken(tokens[0].Facade, tokens[0].Value);
-            return tokens[0].PairingCode;
         }
 
         /// <summary>
@@ -225,49 +177,6 @@ namespace BTCPayAPI
             HttpResponseMessage response = this.get("invoices/" + invoiceId, parameters);
             return JsonConvert.DeserializeObject<Invoice>(this.responseToJsonString(response));
         }
-
-        //public async Task<Invoice> GetInvoiceAsync(String invoiceId)
-        //{
-        //    return await Task.Run( () => getInvoiceByWS(invoiceId));
-        //}
-
-        //private Invoice getInvoiceByWS(String invoiceId)
-        //{
-        //    Invoice inv = null;
-        //    //WebSocket  loop
-        //    using (var ws = new WebSocketSharp.WebSocket("wss://" + _serverHost + "/i/" + invoiceId + "/status/ws"))
-        //    {
-        //        ws.SslConfiguration.EnabledSslProtocols = System.Security.Authentication.SslProtocols.Tls12;
-        //        ws.OnMessage += (sender, e) =>
-        //        {
-        //            Console.WriteLine("WS Message: " + e.Data);
-        //            //Get Invoice 
-        //            inv = getInvoice(invoiceId, BTCPayClient.FACADE_MERCHANT);
-        //            ws.Close();
-        //        };
-        //        ws.OnClose += (sender, e) =>
-        //        {
-        //            //Console.WriteLine("WS Closed: " + e.Code);
-        //        };
-        //        ws.OnError += (sender, e) =>
-        //        {
-        //            //Console.WriteLine("WS Err: " + e.Exception);
-        //        };
-        //        ws.OnOpen += (sender, e) =>
-        //          Console.WriteLine("WS Opened.");
-
-        //        ws.Connect();
-
-        //        while (ws.IsAlive)
-        //        {
-        //            Thread.Sleep(500);
-        //            Console.WriteLine("Sleep 500ms.");
-        //        }
-        //    }//Close websocket
-        //    return inv;
-//
-  //      }
-
         /// <summary>
         /// Retrieve a list of invoices by date range using the merchant facade.
         /// </summary>
@@ -296,143 +205,6 @@ namespace BTCPayAPI
         }
 
         /// <summary>
-        /// Retrieve a list of ledgers by date range using the merchant facade.
-        /// </summary>
-        /// <param name="currency">The three digit currency string for the ledger to retrieve.</param>
-        /// <param name="dateStart">The start date for the query.</param>
-        /// <param name="dateEnd">The end date for the query.</param>
-        /// <returns>A list of invoice objects retrieved from the server.</returns>
-        public Ledger getLedger(String currency, DateTime dateStart, DateTime dateEnd)
-        {
-            Dictionary<String, String> parameters = this.getParams();
-            parameters.Add("token", this.getAccessToken(FACADE_MERCHANT));
-            parameters.Add("startDate", "" + dateStart.ToShortDateString());
-            parameters.Add("endDate", "" + dateEnd.ToShortDateString());
-            HttpResponseMessage response = this.get("ledgers/" + currency, parameters);
-            List<LedgerEntry> entries = JsonConvert.DeserializeObject<List<LedgerEntry>>(this.responseToJsonString(response));
-            return new Ledger(entries);
-        }
-
-        /// <summary>
-        /// Submit a BitPay Payout batch.
-        /// </summary>
-        /// <param name="batch">A PayoutBatch object with request parameters defined.</param>
-        /// <returns>A BitPay generated PayoutBatch object.</param>
-        public PayoutBatch submitPayoutBatch(PayoutBatch batch)
-        {
-            batch.Token = this.getAccessToken(FACADE_PAYROLL);
-            batch.Guid = Guid.NewGuid().ToString();
-            String json = JsonConvert.SerializeObject(batch);
-            HttpResponseMessage response = this.postWithSignature("payouts", json);
-
-            // To avoid having to merge instructions in the response with those we sent, we just remove the instructions
-            // we sent and replace with those in the response.
-            batch.Instructions = new List<PayoutInstruction>();
-
-            JsonConvert.PopulateObject(this.responseToJsonString(response), batch, new JsonSerializerSettings
-                {
-                    NullValueHandling = NullValueHandling.Ignore
-                });
-
-            // Track the token for this batch
-            cacheToken(batch.Id, batch.Token);
-
-            return batch;
-        }
-
-        /// <summary>
-        /// Retrieve a collection of BitPay payout batches.
-        /// </summary>
-        /// <returns>A list of BitPay PayoutBatch objects.</param>
-        public List<PayoutBatch> getPayoutBatches()
-        {
-            Dictionary<String, String> parameters = this.getParams();
-            parameters.Add("token", this.getAccessToken(FACADE_PAYROLL));
-            HttpResponseMessage response = this.get("payouts", parameters);
-            return JsonConvert.DeserializeObject<List<PayoutBatch>>(this.responseToJsonString(response), new JsonSerializerSettings
-                {
-                    NullValueHandling = NullValueHandling.Ignore
-                });
-        }
-    
-        /// <summary>
-        /// Retrieve a BitPay payout batch by batch id using.  The client must have been previously authorized for the payroll facade.
-        /// </summary>
-        /// <param name="batchId">The id of the batch to retrieve.</param>
-        /// <returns>A BitPay PayoutBatch object.</param>
-        public PayoutBatch getPayoutBatch(String batchId) {
-            Dictionary<string, string> parameters = null;
-            try
-            {
-                parameters = new Dictionary<string, string>();
-                parameters.Add("token", getAccessToken(FACADE_PAYROLL));
-            }
-            catch (BitPayException)
-            {
-                // No token for batch.
-                parameters = null;
-            }
-            HttpResponseMessage response = this.get("payouts/" + batchId, parameters);
-            return JsonConvert.DeserializeObject<PayoutBatch>(this.responseToJsonString(response), new JsonSerializerSettings
-                {
-                    NullValueHandling = NullValueHandling.Ignore
-                });
-        }
-
-        /// <summary>
-        /// Cancel a BitPay Payout batch.
-        /// </summary>
-        /// <param name="batchId">The id of the batch to cancel.</param>
-        /// <returns> A BitPay generated PayoutBatch object.</param>
-        public PayoutBatch cancelPayoutBatch(String batchId) {
-            PayoutBatch b = getPayoutBatch(batchId);
-            
-            Dictionary<string, string> parameters = null;
-            try
-            {
-                parameters = new Dictionary<string, string>();
-                parameters.Add("token", b.Token);
-            }
-            catch (BitPayException)
-            {
-                // No token for batch.
-                parameters = null;
-            }
-            HttpResponseMessage response = this.delete("payouts/" + batchId, parameters);
-            return JsonConvert.DeserializeObject<PayoutBatch>(this.responseToJsonString(response), new JsonSerializerSettings
-                {
-                    NullValueHandling = NullValueHandling.Ignore
-                });
-        }
-
-        /// <summary>
-        /// Retrieves settlement reports for the calling merchant filtered by query. The `limit` and `offset` parameters specify pages for large query sets.
-        /// </summary>
-        /// <param name="currency">The three digit currency string for the ledger to retrieve.</param>
-        /// <param name="dateStart">The start date for the query.</param>
-        /// <param name="dateEnd">The end date for the query.</param>
-        /// <param name="status">Can be `processing`, `completed`, or `failed`.</param>
-        /// <param name="limit">Maximum number of settlements to retrieve.</param>
-        /// <param name="offset">Offset for paging</param>
-        /// <returns>A list of BitPay Settlement objects</returns>
-        public List<Settlement> getSettlements(string currency, DateTime dateStart, DateTime dateEnd, string status = "", int limit = 100, int offset = 0)
-        {
-            var parameters = new Dictionary<string, string>
-            {
-                { "token", getAccessToken(FACADE_MERCHANT) },
-                { "startDate", $"{dateStart.ToShortDateString()}" },
-                { "endDate", $"{dateEnd.ToShortDateString()}" },
-                { "currency", currency },
-                { "status", status },
-                { "limit", $"{limit}" },
-                { "offset", $"{offset}" }
-            };
-
-            HttpResponseMessage response = get("settlements", parameters);
-            return JsonConvert.DeserializeObject<List<Settlement>>(responseToJsonString(response));
-        }
-
-        /// <summary>
         /// Retrieves a summary of the specified settlement.
         /// </summary>
         /// <param name="settlementId">Settlement Id</param>
@@ -448,131 +220,54 @@ namespace BTCPayAPI
             return JsonConvert.DeserializeObject<Settlement>(responseToJsonString(response));
         }
 
-        /// <summary>
-        /// Gets a detailed reconciliation report of the activity within the settlement period
-        /// </summary>
-        /// <param name="settlement">Settlement to generate report for.</param>
-        /// <returns>A detailed BitPay Settlement object.</returns>
-        public Settlement getSettlementReconciliationReport(Settlement settlement)
+        public IEnumerator subscribeInvoice(string invoiceId, Action<Invoice> actionOnInvoice, MonoBehaviour mb)
         {
-            var parameters = new Dictionary<string, string>
-            {
-                { "token", settlement.Token }
-            };
+            CoroutineWithData cd = new CoroutineWithData(mb, SubscribeInvoiceCoroutine(invoiceId));
+            yield return cd.coroutine;
 
-            HttpResponseMessage response = get($"settlements/{settlement.Id}/reconciliationReport", parameters);
-            return JsonConvert.DeserializeObject<Settlement>(responseToJsonString(response));
+            Debug.Log("BtcPayUnity: Invoice Result is " + cd.result);
+
+            Invoice resultInv = (Invoice)cd.result;
+            actionOnInvoice(resultInv);
         }
 
-        //public IEnumerator subscribeInvoice(string invoiceId, Action<Invoice> actionOnInvoice, MonoBehaviour mb)
-        //{
-        //    CoroutineWithData cd = new CoroutineWithData(mb, SubscribeInvoiceCoroutine(invoiceId));
-        //    yield return cd.coroutine;
-
-        //    Debug.Log("BtcPayUnity: Invoice Result is " + cd.result);
-
-        //    Invoice resultInv = (Invoice)cd.result;
-        //    actionOnInvoice(resultInv);
-        //}
-        //private IEnumerator SubscribeInvoiceCoroutine(string invoiceId)
-        //{
-        //    Invoice inv = null;
-        //    //WebSocket  loop
-
-        //    using (var ws = new WebSocket("wss://" + _serverHost + "/i/" + invoiceId + "/status/ws"))
-        //    {
-        //        ws.SslConfiguration.EnabledSslProtocols = System.Security.Authentication.SslProtocols.Tls12;
-        //        ws.OnMessage += (sender, e) =>
-        //        {
-        //            Debug.Log("BtcPayUnity:WS Message: " + e.Data);
-        //            //Get Invoice 
-        //            //                inv = getInvoice(invoiceId, BTCPay.FACADE_MERCHANT);
-        //            inv = getInvoice(invoiceId, BTCPayClient.FACADE_MERCHANT);
-        //            Debug.Log("BtcPayUnity:Got invoice : " + inv.Status);
-        //            ws.Close();
-        //        };
-        //        ws.OnClose += (sender, e) =>
-        //        {
-        //            //Console.WriteLine("WS Closed: " + e.Code);
-        //        };
-        //        ws.OnError += (sender, e) =>
-        //        {
-        //            //Console.WriteLine("WS Err: " + e.Exception);
-        //        };
-        //        ws.OnOpen += (sender, e) =>
-        //          Debug.Log("BtcPayUnity:WS Opened.");
-
-        //        ws.Connect();
-
-        //        ////Wait connection is closed when invoice is gotten or exception
-        //        //while (ws.IsAlive)
-        //        //{
-        //        //    //Thread.Sleep(500);
-        //        //    yield return new WaitForSeconds(0.5f);
-        //        //    Debug.Log("BtcPayUnity:Websocket Sleep 500ms.");
-        //        //}
-        //    }//Close websocket
-        //    yield return inv;
-        //}
-
-
-        public async Task subscribeInvoiceAsync(string invoiceId, Func<Invoice, Task> actionOnInvoice)
-        {
-
-            await SubscribeInvoiceAsync(invoiceId, actionOnInvoice);
-        }
-
-        private async Task SubscribeInvoiceAsync(string invoiceId, Func<Invoice,Task> actionOnInvoice)
-        {
-            Uri serverUri = new Uri("wss://" + _serverHost + "/i/" + invoiceId + "/status/ws");
-            //            ws.SslConfiguration.EnabledSslProtocols = System.Security.Authentication.SslProtocols.Tls12;
-            ClientWebSocket webSocket = null;
-            try
-            {
-                webSocket = new ClientWebSocket();
-                await webSocket.ConnectAsync(serverUri, CancellationToken.None);
-                Invoice invoice = await ReceiveAsync(webSocket, invoiceId);
-                await actionOnInvoice(invoice);
-            }
-            catch(Exception ex)
-            {
-                Debug.LogError("SubscribeInvoiceAsync - Exception:" + ex.ToString());
-            }
-            finally
-            {
-                if (webSocket != null) webSocket.Dispose();
-                Debug.Log("SubscribeInvoiceAsync - Web Socket Closed");
-            }
-
-        }
-
-        private async Task<Invoice> ReceiveAsync(ClientWebSocket webSocket,string invoiceId)
+        private IEnumerator SubscribeInvoiceCoroutine(string invoiceId)
         {
             Invoice inv = null;
-            byte[] buffer = new byte[1024];
-            while(webSocket.State == System.Net.WebSockets.WebSocketState.Open)
+            using (var ws = new WebSocket("wss://" + _serverHost + "/i/" + invoiceId + "/status/ws"))
             {
-                WebSocketReceiveResult result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
-                if(result.MessageType == WebSocketMessageType.Close)
+                ws.SslConfiguration.EnabledSslProtocols = System.Security.Authentication.SslProtocols.Tls12;
+                ws.OnMessage += (sender, e) =>
                 {
-                    Debug.Log("webSocket MessageType : " + result.MessageType);
-                    await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, CancellationToken.None);
-                    break;
-                }
-                else
+                    Debug.Log("BtcPayUnity:WS Message: " + e.Data);
+                    //Get Invoice 
+                    //                inv = getInvoice(invoiceId, BTCPay.FACADE_MERCHANT);
+                    inv = getInvoice(invoiceId);//Default Pos facade
+                    Debug.Log("BtcPayUnity:Got invoice : " + inv.Status);
+                    ws.Close();
+                };
+                ws.OnClose += (sender, e) =>
                 {
-                    Debug.Log("webSocket MessageType : " + result.MessageType);
-                    string msg = Encoding.UTF8.GetString(buffer).TrimEnd('\0');
-                    Debug.Log("Receive : " + msg);
-                    inv = getInvoice(invoiceId);
-                    if(inv != null)
-                    {
-                        Debug.Log("BtcPayUnity:Got invoice with status: " + inv.Status);
-                        break;
-                    }
+                    Debug.Log("BtcPayUnity:WS Closed: " + e.Code);
+                };
+                ws.OnError += (sender, e) =>
+                {
+                    Debug.Log("BtcPayUnity:WS Err: " + e.Exception);
+                };
+                ws.OnOpen += (sender, e) =>
+                  Debug.Log("BtcPayUnity:WS Opened.");
+
+                ws.Connect();
+
+                //Wait connection is closed when invoice is gotten or exception
+                while (ws.IsAlive)
+                {
+                    //Thread.Sleep(500);
+                    yield return new WaitForSeconds(0.5f);
+                    Debug.Log("BtcPayUnity:Websocket Sleep/Yield 500ms.");
                 }
-            }
-            return inv;
+            }//Auto Close websocket
+            yield return inv;
         }
 
 
