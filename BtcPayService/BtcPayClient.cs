@@ -1,4 +1,4 @@
-using BitCoinSharp;
+
 using System.Collections;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -12,7 +12,7 @@ using UnityEngine;
 using ZXing;
 using ZXing.QrCode;
 using WebSocketSharp;
-using BtcPayApi;
+
 using System.Collections.Generic;
 
 /**
@@ -450,7 +450,7 @@ namespace BTCPayAPI
                     fullURL = fullURL.Substring(0, fullURL.Length - 1);
                     String signature = KeyUtils.sign(_ecKey, fullURL);
                     _httpClient.DefaultRequestHeaders.Add("x-signature", signature);
-                    _httpClient.DefaultRequestHeaders.Add("x-identity", KeyUtils.bytesToHex(_ecKey.PubKey));
+                    _httpClient.DefaultRequestHeaders.Add("x-identity", KeyUtils.bytesToHex(_ecKey.pubKey));
                 }
 
                 var result = _httpClient.GetAsync(fullURL).Result;
@@ -481,7 +481,7 @@ namespace BTCPayAPI
                     fullURL = fullURL.Substring(0, fullURL.Length - 1);
                     String signature = KeyUtils.sign(_ecKey, fullURL);
                     _httpClient.DefaultRequestHeaders.Add("x-signature", signature);
-                    _httpClient.DefaultRequestHeaders.Add("x-identity", KeyUtils.bytesToHex(_ecKey.PubKey));
+                    _httpClient.DefaultRequestHeaders.Add("x-identity", KeyUtils.bytesToHex(_ecKey.pubKey));
                 }
 
                 var result = _httpClient.DeleteAsync(fullURL).Result;
@@ -511,7 +511,7 @@ namespace BTCPayAPI
                 {
                     String signature = KeyUtils.sign(_ecKey, _baseUrl + uri + json);
                     _httpClient.DefaultRequestHeaders.Add("x-signature", signature);
-                    _httpClient.DefaultRequestHeaders.Add("x-identity", KeyUtils.bytesToHex(_ecKey.PubKey));
+                    _httpClient.DefaultRequestHeaders.Add("x-identity", KeyUtils.bytesToHex(_ecKey.pubKey));
                 }
                 var result = _httpClient.PostAsync(uri, bodyContent).Result;
                 return result;

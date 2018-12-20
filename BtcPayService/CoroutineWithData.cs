@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Collections;
 using UnityEngine;
-namespace BtcPayApi
+namespace BTCPayAPI
 {
     public class CoroutineWithData
     {

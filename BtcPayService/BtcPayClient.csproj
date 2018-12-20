@@ -97,9 +97,9 @@
     <Compile Include="Buyer.cs" />
     <Compile Include="Converters.cs" />
     <Compile Include="CoroutineWithData.cs" />
+    <Compile Include="EcKey.cs" />
     <Compile Include="InvoiceCryptoInfo.cs" />
     <Compile Include="InvoiceData.cs" />
-    <Compile Include="ECKey.cs" />
     <Compile Include="Invoice.cs" />
     <Compile Include="InvoicePaymentUrls.cs" />
     <Compile Include="InvoiceTransaction.cs" />

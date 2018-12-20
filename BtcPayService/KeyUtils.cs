@@ -28,7 +28,7 @@ namespace BTCPayAPI
         public static EcKey createEcKeyFromHexString(String privateKey)
         {
             BigInteger pkey = new BigInteger(privateKey, 16);
-            EcKey key = new EcKey(pkey);
+            EcKey key = new EcKey(pkey.ToByteArray());
             return key;
         }
 
@@ -78,7 +78,7 @@ namespace BTCPayAPI
         public static String deriveSIN(EcKey ecKey)
         {
             // Get sha256 hash and then the RIPEMD-160 hash of the public key (this call gets the result in one step).
-            byte[] pubKeyHash = ecKey.PubKeyHash; 
+            byte[] pubKeyHash = ecKey.pubKey;
 
             // Convert binary pubKeyHash, SINtype and version to Hex
             String version = "0F";
@@ -90,7 +90,7 @@ namespace BTCPayAPI
 
             // Convert the hex string back to binary and double sha256 hash it leaving in binary both times
             byte[] preSINbyte = hexToBytes(preSIN);
-            byte[] hash2Bytes = Utils.DoubleDigest(preSINbyte);
+            byte[] hash2Bytes = DoubleDigest(preSINbyte);
 
             // Convert back to hex and take first four bytes
             String hashString = bytesToHex(hash2Bytes);
@@ -99,12 +99,57 @@ namespace BTCPayAPI
             // Append first four bytes to fully appended SIN string
             String unencoded = preSIN + first4Bytes;
             byte[] unencodedBytes = new BigInteger(unencoded, 16).ToByteArray();
-            String encoded = Base58.Encode(unencodedBytes);
+            String encoded = Encode(unencodedBytes);
 
             return encoded;
         }
+        private const string _alphabet = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+        private static readonly BigInteger _base = BigInteger.ValueOf(58);
 
- 	    public static String sign(EcKey ecKey, String input) 
+        public static string Encode(byte[] input)
+        {
+            // TODO: This could be a lot more efficient.
+            var bi = new BigInteger(1, input);
+            var s = new StringBuilder();
+            while (bi.CompareTo(_base) >= 0)
+            {
+                var mod = bi.Mod(_base);
+                s.Insert(0, new[] { _alphabet[mod.IntValue] });
+                bi = bi.Subtract(mod).Divide(_base);
+            }
+            s.Insert(0, new[] { _alphabet[bi.IntValue] });
+            // Convert leading zeros too.
+            foreach (var anInput in input)
+            {
+                if (anInput == 0)
+                    s.Insert(0, new[] { _alphabet[0] });
+                else
+                    break;
+            }
+            return s.ToString();
+        }
+
+        /// <summary>
+        /// See <see cref="DoubleDigest(byte[], int, int)"/>.
+        /// </summary>
+        public static byte[] DoubleDigest(byte[] input)
+        {
+            return DoubleDigest(input, 0, input.Length);
+        }
+
+        /// <summary>
+        /// Calculates the SHA-256 hash of the given byte range, and then hashes the resulting hash again. This is
+        /// standard procedure in BitCoin. The resulting hash is in big endian form.
+        /// </summary>
+        public static byte[] DoubleDigest(byte[] input, int offset, int length)
+        {
+            var algorithm = new SHA256Managed();
+            var first = algorithm.ComputeHash(input, offset, length);
+            return algorithm.ComputeHash(first);
+        }
+
+
+        public static String sign(EcKey ecKey, String input) 
         {
             String hash = sha256Hash(input);
             return bytesToHex(ecKey.Sign(hexToBytes(hash)));
