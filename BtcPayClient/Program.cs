@@ -16,7 +16,7 @@ namespace BTCBayTestClient
         {
             String pairingCode = "uGhQ6vx";
             String host = "btcpaytest.indiesquare.net";
-            BTCPayClient bitpay = new BTCPayClient(pairingCode,host);
+            BTCPayClient bitpay = new BTCPayClient(new MonoBehaviour(),pairingCode,host);
 
             //New Invoice Prep
             Invoice invoice = new Invoice(1.0, "USD");
@@ -28,15 +28,13 @@ namespace BTCBayTestClient
             invoice.ItemDesc = "Test Description";
 
             //Create Invoice 
-            invoice = bitpay.createInvoice(invoice);
-            Console.WriteLine("Invoice Created:" + invoice.Id);
-            Console.WriteLine("Invoice Url:" + invoice.Url);
+            bitpay.createInvoice(invoice, printInvoice);
 
             //Get Invoice 
-            Invoice inv = bitpay.getInvoice(invoice.Id);
+            bitpay.getInvoice(invoice.Id, printInvoice);
 
             //Subscribe Invoice to change
-            bitpay.subscribeInvoice(invoice.Id, printInvoice, new MonoBehaviour());
+            //bitpay.subscribeInvoice(invoice.Id, printInvoice);
 
 
         }
@@ -50,4 +48,5 @@ namespace BTCBayTestClient
             return;
         }
     }
+
 }

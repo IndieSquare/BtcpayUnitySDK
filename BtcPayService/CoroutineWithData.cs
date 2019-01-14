@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Collections;
+﻿using System.Collections;
 using UnityEngine;
 namespace BTCPayAPI
 {
@@ -23,7 +18,16 @@ namespace BTCPayAPI
             while (target.MoveNext())
             {
                 result = target.Current;
+                //if(result != null)
+                //{
+                //    Debug.Log("CoroutineWithData.Run() Type:" + result.GetType().ToString());
+                //}
+                //else
+                //{
+                //   Debug.Log("CoroutineWithData.Run() Type: null");
+                //}
                 yield return result;
+
             }
         }
     }

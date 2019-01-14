@@ -40,34 +40,34 @@ namespace BitPayTest
         //    }
         //}
 
-        [TestMethod]
-        public void testShouldGetInvoiceId()
-        {
-            try
-            {
-                Invoice invoice = bitpay.createInvoice(new Invoice(1.0, "USD"), BTCPayClient.FACADE_MERCHANT);
-                invoice = bitpay.getInvoice(invoice.Id, BTCPayClient.FACADE_MERCHANT);
-                Assert.IsNotNull(invoice.Id, "Invoice created with id=NULL");
-            }
-            catch (Exception ex)
-            {
-                Assert.Fail(ex.Message);
-            }
-        }
+        //[TestMethod]
+        //public void testShouldGetInvoiceId()
+        //{
+        //    try
+        //    {
+        //        Invoice invoice = bitpay.createInvoice(new Invoice(1.0, "USD"), BTCPayClient.FACADE_MERCHANT);
+        //        invoice = bitpay.getInvoice(invoice.Id, BTCPayClient.FACADE_MERCHANT);
+        //        Assert.IsNotNull(invoice.Id, "Invoice created with id=NULL");
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        Assert.Fail(ex.Message);
+        //    }
+        //}
 
-        [TestMethod]
-        public void testShouldGetInvoices()
-        {
-            try
-            {
-                List<Invoice> invoices = bitpay.getInvoices(new DateTime(2014, 8, 1), new DateTime(2014, 8, 31));
-                Assert.IsTrue(invoices.Count > 0, "No invoices retrieved");
-            }
-            catch (Exception ex)
-            {
-                Assert.Fail(ex.Message);
-            }
-        }
+        //[TestMethod]
+        //public void testShouldGetInvoices()
+        //{
+        //    try
+        //    {
+        //        List<Invoice> invoices = bitpay.getInvoices(new DateTime(2014, 8, 1), new DateTime(2014, 8, 31));
+        //        Assert.IsTrue(invoices.Count > 0, "No invoices retrieved");
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        Assert.Fail(ex.Message);
+        //    }
+        //}
 
         //[TestMethod]
         //public void testShouldGetBTCLedger()

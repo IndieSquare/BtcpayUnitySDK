@@ -21,10 +21,10 @@ namespace BTCPayAPI
 		    return _rates;
 	    }
 
-	    public void update()
-        {
-		    _rates = _bp.getRates().getRates();
-	    }
+	    //public void update()
+     //   {
+		   // _rates = _bp.getRates().getRates();
+	    //}
 
         public decimal getRate(string currencyCode)
         {
