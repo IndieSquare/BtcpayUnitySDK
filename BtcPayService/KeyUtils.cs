@@ -1,9 +1,13 @@
-﻿using BitCoinSharp;
-using Org.BouncyCastle.Math;
+﻿using Org.BouncyCastle.Math;
 using System;
 using System.Text;
 using System.IO;
 using System.Security.Cryptography;
+using Org.BouncyCastle.Asn1.Sec;
+using Org.BouncyCastle.Crypto.Digests;
+using Multiformats.Base;
+using UnityEngine;
+using NBitcoin;
 
 namespace BTCPayAPI
 {
@@ -12,7 +16,7 @@ namespace BTCPayAPI
         private static char[] hexArray = "0123456789abcdef".ToCharArray();
         private static String PRIV_KEY_FILENAME = "btcpay_private.key";
 
-	    public KeyUtils() {}
+        public KeyUtils() { }
 
         public static bool privateKeyExists()
         {
@@ -24,6 +28,14 @@ namespace BTCPayAPI
             //Default constructor uses SecureRandom numbers.
             return new EcKey();
         }
+
+        public static Key createNBEcKey()
+        {
+            //Default constructor uses SecureRandom numbers.
+            return new Key();
+        }
+
+
 
         public static EcKey createEcKeyFromHexString(String privateKey)
         {
@@ -39,16 +51,40 @@ namespace BTCPayAPI
             return createEcKeyFromHexString(privateKey);
         }
 
-        public static EcKey loadEcKey()
+        //public static EcKey loadEcKey()
+        //{
+        //    using (FileStream fs = File.OpenRead(PRIV_KEY_FILENAME))
+        //    {
+        //        byte[] b = new byte[1024];
+        //        fs.Read(b, 0, b.Length);
+        //        string base58 = new Base58Encoding().Encode(b);
+        //        Debug.Log("loadEcKey():Base58 of prvkey:" + base58);
+        //        EcKey key = EcKey.FromAsn1(b);
+        //        return key;
+        //    }
+        //}
+
+        public static Key loadNBEcKey()
         {
-            using (FileStream fs = File.OpenRead(PRIV_KEY_FILENAME))
-            {
-                byte[] b = new byte[1024];
-                fs.Read(b, 0, b.Length);
-                EcKey key = EcKey.FromAsn1(b);
-                return key;
-            }
-	    }
+            string base58 = DataAccess.Load();
+            byte[] b = new Base58Encoding().Decode(base58);
+            Debug.Log("loadEcKey():Base58 of prvkey:" + base58);
+            EcKey key = EcKey.FromAsn1(b);
+            return new Key(key.GetPrivKeyBytes());
+        }
+        //public static Key loadNBEcKey()
+        //{
+        //    using (FileStream fs = File.OpenRead(PRIV_KEY_FILENAME))
+        //    {
+        //        byte[] b = new byte[1024];
+        //        fs.Read(b, 0, b.Length);
+        //        string base58 = new Base58Encoding().Encode(b);
+        //        Debug.Log("loadEcKey():Base58 of prvkey:" + base58);
+        //        EcKey key = EcKey.FromAsn1(b);
+
+        //        return new Key(key.GetPrivKeyBytes());
+        //    }
+        //}
 
         public static String getKeyStringFromFile(String filename)
         {
@@ -67,18 +103,57 @@ namespace BTCPayAPI
             return "";
         }
 
-        public static void saveEcKey(EcKey ecKey)
+        //public static void saveEcKey(EcKey ecKey)
+        //{
+        //    byte[] bytes = ecKey.ToAsn1();
+        //    FileStream fs = new FileStream(PRIV_KEY_FILENAME, FileMode.Create, FileAccess.Write);
+        //    fs.Write(bytes, 0, bytes.Length);
+        //    fs.Close();
+        //}
+
+        public static void saveEcKey(Key nbEcKey)
         {
-		    byte[] bytes = ecKey.ToAsn1();
-            FileStream fs = new FileStream(PRIV_KEY_FILENAME, FileMode.Create, FileAccess.Write);
-            fs.Write(bytes, 0, bytes.Length);
-            fs.Close();
+            Debug.Log("saveEcKey():start");
+
+            byte[] bytes = EcKey.ToAsn1(nbEcKey.ToBytes(), nbEcKey.PubKey.ToBytes());
+            string base58 = new Base58Encoding().Encode(bytes);
+
+            DataAccess.Save(base58);
+            Debug.Log("saveEcKey():end");
         }
+        //public static void saveEcKey(Key nbEcKey)
+        //{
+        //    Debug.Log("saveEcKey():start");
+
+        //    byte[] bytes = EcKey.ToAsn1(nbEcKey.ToBytes(), nbEcKey.PubKey.ToBytes());
+        //    FileStream fs = new FileStream(PRIV_KEY_FILENAME, FileMode.Create, FileAccess.Write);
+        //    fs.Write(bytes, 0, bytes.Length);
+        //    fs.Close();
+        //    Debug.Log("saveEcKey():end");
+        //}
 
         public static String deriveSIN(EcKey ecKey)
         {
+            byte[] pubKey = ecKey.PubKey;
+            return deriveSIN(pubKey);
+        }
+
+        public static String deriveSIN(Key nbEcKey)
+        {
+            byte[] pubKey = nbEcKey.PubKey.Decompress().ToBytes();
+            return deriveSIN(pubKey);
+        }
+
+        public static String deriveSIN(byte[] pubKeyBytes)
+        {
             // Get sha256 hash and then the RIPEMD-160 hash of the public key (this call gets the result in one step).
-            byte[] pubKeyHash = ecKey.PubKeyHash; 
+            byte[] hash = new SHA256Managed().ComputeHash(pubKeyBytes);
+            RipeMD160Digest ripeMd160Digest = new RipeMD160Digest();
+            ripeMd160Digest.BlockUpdate(hash, 0, hash.Length);
+            byte[] output = new byte[20];
+            ripeMd160Digest.DoFinal(output, 0);
+
+            byte[] pubKeyHash = output;
 
             // Convert binary pubKeyHash, SINtype and version to Hex
             String version = "0F";
@@ -90,7 +165,7 @@ namespace BTCPayAPI
 
             // Convert the hex string back to binary and double sha256 hash it leaving in binary both times
             byte[] preSINbyte = hexToBytes(preSIN);
-            byte[] hash2Bytes = Utils.DoubleDigest(preSINbyte);
+            byte[] hash2Bytes = DoubleDigest(preSINbyte);
 
             // Convert back to hex and take first four bytes
             String hashString = bytesToHex(hash2Bytes);
@@ -99,18 +174,127 @@ namespace BTCPayAPI
             // Append first four bytes to fully appended SIN string
             String unencoded = preSIN + first4Bytes;
             byte[] unencodedBytes = new BigInteger(unencoded, 16).ToByteArray();
-            String encoded = Base58.Encode(unencodedBytes);
+            String encoded = Encode(unencodedBytes);
 
             return encoded;
         }
 
- 	    public static String sign(EcKey ecKey, String input) 
-        {
-            String hash = sha256Hash(input);
-            return bytesToHex(ecKey.Sign(hexToBytes(hash)));
-	    }
+        private const string _alphabet = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+        private static readonly BigInteger _base = BigInteger.ValueOf(58);
 
-        private static String sha256Hash(String value)
+        public static string Encode(byte[] input)
+        {
+            // TODO: This could be a lot more efficient.
+            var bi = new BigInteger(1, input);
+            var s = new StringBuilder();
+            while (bi.CompareTo(_base) >= 0)
+            {
+                var mod = bi.Mod(_base);
+                s.Insert(0, new[] { _alphabet[mod.IntValue] });
+                bi = bi.Subtract(mod).Divide(_base);
+            }
+            s.Insert(0, new[] { _alphabet[bi.IntValue] });
+            // Convert leading zeros too.
+            foreach (var anInput in input)
+            {
+                if (anInput == 0)
+                    s.Insert(0, new[] { _alphabet[0] });
+                else
+                    break;
+            }
+            return s.ToString();
+        }
+
+        /// <summary>
+        /// See <see cref="DoubleDigest(byte[], int, int)"/>.
+        /// </summary>
+        public static byte[] DoubleDigest(byte[] input)
+        {
+            return DoubleDigest(input, 0, input.Length);
+        }
+
+        /// <summary>
+        /// Calculates the SHA-256 hash of the given byte range, and then hashes the resulting hash again. This is
+        /// standard procedure in BitCoin. The resulting hash is in big endian form.
+        /// </summary>
+        public static byte[] DoubleDigest(byte[] input, int offset, int length)
+        {
+            var algorithm = new SHA256Managed();
+            var first = algorithm.ComputeHash(input, offset, length);
+            return algorithm.ComputeHash(first);
+        }
+
+        public static byte[] ConvertDerToP1393(byte[] data)
+        {
+            byte[] b = new byte[132];
+            int totalLength = data[1];
+            int n = 0;
+            int offset = 4;
+            int thisLength = data[offset++];
+            if (data[offset] == 0)
+            {
+                // Negative number!
+                ++offset;
+                --thisLength;
+            }
+            for (int i = thisLength; i < 66; ++i)
+            {
+                b[n++] = 0;
+            }
+            if (thisLength > 66)
+            {
+                System.Console.WriteLine("BAD, first number is too big! " + thisLength);
+            }
+            else
+            {
+                for (int i = 0; i < thisLength; ++i)
+                {
+                    b[n++] = data[offset++];
+                }
+            }
+            ++offset;
+            thisLength = data[offset++];
+
+            for (int i = thisLength; i < 66; ++i)
+            {
+                b[n++] = 0;
+            }
+            if (thisLength > 66)
+            {
+                System.Console.WriteLine("BAD, second number is too big! " + thisLength);
+            }
+            else
+            {
+                for (int i = 0; i < thisLength; ++i)
+                {
+                    b[n++] = data[offset++];
+                }
+            }
+            return b;
+        }
+
+        public static string sign(EcKey ecKey, string input)
+        {
+            // return ecKey.Sign(input);
+            String hash = Sha256Hash(input);
+            var hashBytes = hexToBytes(hash);
+            var signature = ecKey.Sign(hashBytes);
+            var bytesHex = bytesToHex(signature);
+            return bytesHex;
+            //return bytesToHex(ecKey.Sign(hexToBytes(hash)));
+        }
+
+        private static byte[] Sha256HashBytes(string value)
+        {
+            using (var hash = SHA256.Create())
+            {
+                var bytes = Encoding.UTF8.GetBytes(value);
+                var result = hash.ComputeHash(bytes);
+                return result;
+            }
+        }
+
+        public static String Sha256Hash(String value)
         {
             StringBuilder Sb = new StringBuilder();
             using (SHA256 hash = SHA256Managed.Create())
@@ -161,14 +345,15 @@ namespace BTCPayAPI
 
         public static String bytesToHex(byte[] bytes)
         {
-	        char[] hexChars = new char[bytes.Length * 2];
-	        for ( int j = 0; j < bytes.Length; j++ ) {
-	            int v = bytes[j] & 0xFF;
+            char[] hexChars = new char[bytes.Length * 2];
+            for (int j = 0; j < bytes.Length; j++)
+            {
+                int v = bytes[j] & 0xFF;
                 hexChars[j * 2] = hexArray[(int)((uint)v >> 4)];
-	            hexChars[j * 2 + 1] = hexArray[v & 0x0F];
-	        }
-	        return new String(hexChars);
-	    }
+                hexChars[j * 2 + 1] = hexArray[v & 0x0F];
+            }
+            return new String(hexChars);
+        }
 
         static byte[] getBytes(string str)
         {

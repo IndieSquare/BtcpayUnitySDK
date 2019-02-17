@@ -1,7 +1,6 @@
 ﻿using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using System.Web.Script.Serialization;
 
 namespace BTCPayAPI
 {
@@ -144,9 +143,11 @@ namespace BTCPayAPI
         // Response fields
         //
 
+        [JsonProperty(PropertyName = "id")]
         public string Id { get; set; }
         public bool ShouldSerializeId() { return false; }
 
+        [JsonProperty(PropertyName = "url")]
         public string Url { get; set; }
         public bool ShouldSerializeUrl() { return false; }
 
@@ -196,10 +197,31 @@ namespace BTCPayAPI
         private Flags Flags { get; set; }
         public bool ShouldSerializeFlags() { return false; }
 
+        [Newtonsoft.Json.JsonProperty]
         public List<InvoiceCryptoInfo> CryptoInfo { get; set; }
         public bool ShouldSerializeCryptoInfo() { return false; }
 
 
+        public override string ToString()
+        {
+            string str = base.ToString() + ":guid:"+Guid+",Status:"+Status+",Token:"+Token + ",url:" + Url + " ,id:" + Id + ",Currency:" + Currency + ",Price:" + Price + ",Desc:" + ItemDesc;
+            if(CryptoInfo!=null && CryptoInfo.Count > 0) {
+                foreach(InvoiceCryptoInfo info in CryptoInfo)
+                {
+                    if (info.paymentType == "BTCLike")
+                    {
+                        str += ",BTC_URL:" + info.paymentUrls.BIP21;
+                    }
+                    if (info.paymentType == "LightningLike")
+                    {
+                        str += ",LIGHTNING_URL:" + info.paymentUrls.BOLT11;
+                    }
+
+                }
+            }
+
+            return str;
+        }
     }
 
     class Flags

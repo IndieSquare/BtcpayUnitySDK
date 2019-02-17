@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Net.Http;
-using System.Web.Helpers;
+﻿using System.Collections.Generic;
 
 namespace BTCPayAPI
 {
@@ -24,10 +21,10 @@ namespace BTCPayAPI
 		    return _rates;
 	    }
 
-	    public void update()
-        {
-		    _rates = _bp.getRates().getRates();
-	    }
+	    //public void update()
+     //   {
+		   // _rates = _bp.getRates().getRates();
+	    //}
 
         public decimal getRate(string currencyCode)
         {
