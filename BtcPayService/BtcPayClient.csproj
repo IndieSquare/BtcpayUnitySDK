@@ -50,8 +50,9 @@
     <Reference Include="NBitcoin">
       <HintPath>..\packages\NBitcoinFromChris\NBitcoin.dll</HintPath>
     </Reference>
-    <Reference Include="Newtonsoft.Json, Version=10.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <HintPath>..\packages\Newtonsoft.Json.10.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
+    <Reference Include="Newtonsoft.Json, Version=6.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\JsonNetUnity\Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -91,6 +92,12 @@
     <Reference Include="websocket-sharp">
       <HintPath>..\..\..\websocket-sharp\websocket-sharp\bin\Debug_Ubuntu\websocket-sharp.dll</HintPath>
     </Reference>
+    <Reference Include="WebSocketUnity">
+      <HintPath>..\..\..\Unity\WebSocketUnity\WebSocketUnity\bin\Debug\netstandard2.0\WebSocketUnity.dll</HintPath>
+    </Reference>
+    <Reference Include="zxing.unity">
+      <HintPath>..\packages\zxing.unity.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BtcPayClient.cs" />
@@ -114,7 +121,6 @@
     <Compile Include="Settlement.cs" />
     <Compile Include="SettlementLedgerEntry.cs" />
     <Compile Include="Token.cs" />
-    <Compile Include="WebSocket.cs" />
     <Compile Include="WithHoldings.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -125,6 +131,12 @@
     <None Include="packages.config">
       <SubType>Designer</SubType>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\DataAccessUnity\DataAccessUnity.csproj">
+      <Project>{1e563c65-6fa8-49ee-a397-7396f8dbe980}</Project>
+      <Name>DataAccessUnity</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

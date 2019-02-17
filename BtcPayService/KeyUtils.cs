@@ -7,6 +7,8 @@ using Org.BouncyCastle.Asn1.Sec;
 using Org.BouncyCastle.Crypto.Digests;
 using Multiformats.Base;
 using UnityEngine;
+using NBitcoin;
+
 namespace BTCPayAPI
 {
     public class KeyUtils
@@ -27,6 +29,14 @@ namespace BTCPayAPI
             return new EcKey();
         }
 
+        public static Key createNBEcKey()
+        {
+            //Default constructor uses SecureRandom numbers.
+            return new Key();
+        }
+
+
+
         public static EcKey createEcKeyFromHexString(String privateKey)
         {
             BigInteger pkey = new BigInteger(privateKey, 16);
@@ -41,26 +51,40 @@ namespace BTCPayAPI
             return createEcKeyFromHexString(privateKey);
         }
 
-        public static EcKey loadEcKey()
-        {
-            //string base58prv = "z272nqNdL8zQSc1AWFmvZBecwgsVdduJXuVNrfdBJBTTTUqFgkcaGAuVYiyCEkQE3BuYtkAcWPKaMGcU8KCan9TVDYtXVwKcnHKZr9yJgsXvZZtdFDabtDZLJJ5KMmZhzB53QYEEzTAkCU3xj6ZdmwB44imszTVRocRXUcmvLUhihTW8i6yNG2LDAA5poisYECfSX7MDu2fsdLy4Y5vgBtPSrN2wjaJmTzvrW3dtr8smvza5J2CM9ynqtS2Hvx6P3zeG7PY1AP71PpqTLvB8WW69dqabfjgLzx6qLmDjYEgihavGTx7PCUJKPDBNJFuVzgKCC6Ez3FqX4XZ7hRhCLKEj7MmkYczKCQBpDB7hsFcDP7oMcwmrGx5y6URSSYn7a1r9rWU2nf8C6TcRPkM4LXBDEEieAy9atBUELfSZg9C5g5xdnLjP8wzhdVN9eajyAhEEFyLpZab4z23bJLh5vrkFBbS7CMioHmMQTAJzUqqjXLCjefV8SLMCZWNpmKncEXC8Ayz25XfHNkuFAsJwrxQAjqY2MKBcGDZVYh138Knw1FjwriqNsKJkdmf3ZiBiFgb2A26GDxLxDcpAWctJwBMvzVMcFY2kM4u7UYHeVM2GDKVmM7otM68aMHYyUh7F8As7r5jeynRY5M6sZk7ziCUmtvLgUi5chj9WiY38aQTgzpit8JLjTaeD2ASNZ8jSFLZgLNjZoP3AhVfn6sL5DWQejC9yxPJRj9qY6ZqcV5sKsCALXDdZbVhUe8JZuEEQ6u7et3Tj1Wcwpvdf8N2qADwBhmtRmRmrfVWsCKWzPEnfMPi4PkyEpQvit8nSSC33mon2LU4CQ1TUpvrXTRHDAtEHBnHHzBryCBY9xC9UxkJXncfkzkR1u2JDgo1R8t5qqfdrXSNqFTPLz4AcdBvNs7WujVeG9VcoKUH6Ac5uCtTjFxYefG4hQBT5Hi4F4Qeh6oqoc1TFFG2enZtuQ5XZahgeGDvijk2yQAeA6jKJAdadxaWRPX3yscbYPKq8obvUK6JuZvnBYg3oFvSSqy3v3mAD7NwQ8zZmRacKHS2UUpTtri9SVpXaUvYoKsdwmiC2zXFHhzsVz1xkKHQuAcWg3dSK2oYba7c9cF2yGsSCRGADuehDcWmzzEGojWQUF4ZeH2qMtWc4MnsJbUr3DLC2UhPFYnhiPZx1rsSGd83frTvQFficfvexheJrs5NqEMoNrssjGvjhc54ySHy21d1tu6XRnyrCusPEEnUxBtXaxnGDW6WQas5F1FmycAhMXcSULAred7aiCuBnrTbAiwTfLD5ArwV8DV7c2tF4FECNbDNPQWVuvdz7QaXaUYvJDr2cY2Lb2UJm7t6Ahqc3cyMTCFx3NbBXHo6jY1eSd47F3A4wpxnX8V6rd93V";
-            //byte[] b = new Base58Encoding().Decode(base58prv);
-            //Debug.Log("loadEcKey():Base58 of prvkey decoded:" + b.Length);
-            //Debug.Log("loadEcKey():Base58 of prvkey encoded:"+new Base58Encoding().Encode(b));
-            //EcKey key = EcKey.FromAsn1(b);
-            //Debug.Log("loadEcKey():Base58 of prvkey loaded:"+key);
+        //public static EcKey loadEcKey()
+        //{
+        //    using (FileStream fs = File.OpenRead(PRIV_KEY_FILENAME))
+        //    {
+        //        byte[] b = new byte[1024];
+        //        fs.Read(b, 0, b.Length);
+        //        string base58 = new Base58Encoding().Encode(b);
+        //        Debug.Log("loadEcKey():Base58 of prvkey:" + base58);
+        //        EcKey key = EcKey.FromAsn1(b);
+        //        return key;
+        //    }
+        //}
 
-            //return key;
-            using (FileStream fs = File.OpenRead(PRIV_KEY_FILENAME))
-            {
-                byte[] b = new byte[1024];
-                fs.Read(b, 0, b.Length);
-                string base58 = new Base58Encoding().Encode(b);
-                Debug.Log("loadEcKey():Base58 of prvkey:" + base58);
-                EcKey key = EcKey.FromAsn1(b);
-                return key;
-            }
+        public static Key loadNBEcKey()
+        {
+            string base58 = DataAccess.Load();
+            byte[] b = new Base58Encoding().Decode(base58);
+            Debug.Log("loadEcKey():Base58 of prvkey:" + base58);
+            EcKey key = EcKey.FromAsn1(b);
+            return new Key(key.GetPrivKeyBytes());
         }
+        //public static Key loadNBEcKey()
+        //{
+        //    using (FileStream fs = File.OpenRead(PRIV_KEY_FILENAME))
+        //    {
+        //        byte[] b = new byte[1024];
+        //        fs.Read(b, 0, b.Length);
+        //        string base58 = new Base58Encoding().Encode(b);
+        //        Debug.Log("loadEcKey():Base58 of prvkey:" + base58);
+        //        EcKey key = EcKey.FromAsn1(b);
+
+        //        return new Key(key.GetPrivKeyBytes());
+        //    }
+        //}
 
         public static String getKeyStringFromFile(String filename)
         {
@@ -79,19 +103,51 @@ namespace BTCPayAPI
             return "";
         }
 
-        public static void saveEcKey(EcKey ecKey)
+        //public static void saveEcKey(EcKey ecKey)
+        //{
+        //    byte[] bytes = ecKey.ToAsn1();
+        //    FileStream fs = new FileStream(PRIV_KEY_FILENAME, FileMode.Create, FileAccess.Write);
+        //    fs.Write(bytes, 0, bytes.Length);
+        //    fs.Close();
+        //}
+
+        public static void saveEcKey(Key nbEcKey)
         {
-            byte[] bytes = ecKey.ToAsn1();
-            FileStream fs = new FileStream(PRIV_KEY_FILENAME, FileMode.Create, FileAccess.Write);
-            fs.Write(bytes, 0, bytes.Length);
-            fs.Close();
+            Debug.Log("saveEcKey():start");
+
+            byte[] bytes = EcKey.ToAsn1(nbEcKey.ToBytes(), nbEcKey.PubKey.ToBytes());
+            string base58 = new Base58Encoding().Encode(bytes);
+
+            DataAccess.Save(base58);
+            Debug.Log("saveEcKey():end");
         }
+        //public static void saveEcKey(Key nbEcKey)
+        //{
+        //    Debug.Log("saveEcKey():start");
+
+        //    byte[] bytes = EcKey.ToAsn1(nbEcKey.ToBytes(), nbEcKey.PubKey.ToBytes());
+        //    FileStream fs = new FileStream(PRIV_KEY_FILENAME, FileMode.Create, FileAccess.Write);
+        //    fs.Write(bytes, 0, bytes.Length);
+        //    fs.Close();
+        //    Debug.Log("saveEcKey():end");
+        //}
 
         public static String deriveSIN(EcKey ecKey)
         {
-            // Get sha256 hash and then the RIPEMD-160 hash of the public key (this call gets the result in one step).
             byte[] pubKey = ecKey.PubKey;
-            byte[] hash = new SHA256Managed().ComputeHash(pubKey);
+            return deriveSIN(pubKey);
+        }
+
+        public static String deriveSIN(Key nbEcKey)
+        {
+            byte[] pubKey = nbEcKey.PubKey.Decompress().ToBytes();
+            return deriveSIN(pubKey);
+        }
+
+        public static String deriveSIN(byte[] pubKeyBytes)
+        {
+            // Get sha256 hash and then the RIPEMD-160 hash of the public key (this call gets the result in one step).
+            byte[] hash = new SHA256Managed().ComputeHash(pubKeyBytes);
             RipeMD160Digest ripeMd160Digest = new RipeMD160Digest();
             ripeMd160Digest.BlockUpdate(hash, 0, hash.Length);
             byte[] output = new byte[20];
@@ -225,7 +281,7 @@ namespace BTCPayAPI
             var signature = ecKey.Sign(hashBytes);
             var bytesHex = bytesToHex(signature);
             return bytesHex;
-            return bytesToHex(ecKey.Sign(hexToBytes(hash)));
+            //return bytesToHex(ecKey.Sign(hexToBytes(hash)));
         }
 
         private static byte[] Sha256HashBytes(string value)
@@ -238,7 +294,7 @@ namespace BTCPayAPI
             }
         }
 
-        private static String Sha256Hash(String value)
+        public static String Sha256Hash(String value)
         {
             StringBuilder Sb = new StringBuilder();
             using (SHA256 hash = SHA256Managed.Create())

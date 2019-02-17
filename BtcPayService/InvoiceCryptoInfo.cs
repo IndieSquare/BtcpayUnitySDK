@@ -8,10 +8,15 @@ using Newtonsoft.Json;
 
 namespace BTCPayAPI
 {
+
+
     public class InvoiceCryptoInfo
     {
-        public string cryptoCode;
-        public string paymentType;
+        [JsonConstructor]
+        public InvoiceCryptoInfo() { }
+        [JsonProperty(PropertyName = "cryptoCode")]
+        public string cryptoCode { get; set; }
+        public string paymentType { get; set; }
         public double rate { get; set; }
         public double paid { get; set; }
         public double price { get; set; }
@@ -27,6 +32,7 @@ namespace BTCPayAPI
 
     public class PaymentUrls
     {
+        public PaymentUrls() { }
         public string BOLT11;
         public string BIP21;
         public string BIP72;

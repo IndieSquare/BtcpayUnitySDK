@@ -216,5 +216,7 @@ namespace BitPayTest
         //    rates.update();
         //    Assert.IsNotNull(rates.getRates(), "Exchange rates not retrieved after update");
         //}
+
+
     }
 }

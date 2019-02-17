@@ -8,13 +8,17 @@ using System.Text.RegularExpressions;
 using UnityEngine;
 using UnityEngine.Networking;
 using System.Collections.Generic;
-
+using NBitcoin;
+using NBitcoin.Crypto;
+using System.Security.Cryptography;
+using ZXing;
+using ZXing.QrCode;
 /**
- * @author Andy Phillipson
- * @date 9.3.2014
- * 
- * See bitpay.com/api for more information.
- */
+* @author Andy Phillipson
+* @date 9.3.2014
+* 
+* See bitpay.com/api for more information.
+*/
 
 namespace BTCPayAPI
 {
@@ -23,16 +27,15 @@ namespace BTCPayAPI
     {
         private const String BITPAY_API_VERSION = "2.0.0";
         private const String BITPAY_PLUGIN_INFO = "BTCPay CSharp Client " + BITPAY_API_VERSION;
-        private String BITPAY_URL = "";
 
         public const String FACADE_POS = "pos";
-        public const String FACADE_MERCHANT = "merchant";
-        public const String FACADE_USER = "user";
+        //public const String FACADE_MERCHANT = "merchant";
+        //public const String FACADE_USER = "user";
 
         private String _serverHost = null;
         
         private String _baseUrl = "";
-        private EcKey _ecKey = null;
+        private Key _ecKey = null;
         private String _identity = "";
         private String _clientName = "";
         private Dictionary<string, string> _tokenCache; // {facade, token}
@@ -71,8 +74,15 @@ namespace BTCPayAPI
             {
                 _clientName = _clientName.Substring(0, 60);
             }
+
+            if (string.IsNullOrEmpty(serverhost))
+            {
+                throw new Exception("BTCpay server hostname is mandatory.");
+            }
             _serverHost = serverhost;
             _baseUrl = "https://" + _serverHost + "/";
+            Debug.Log("in Constructor:_baseUrl="+ _baseUrl);
+
         }
 
         public IEnumerator initialize()
@@ -121,7 +131,9 @@ namespace BTCPayAPI
             yield return cd.coroutine;
 
             string tokenStr = (string)cd.result;
+
             tokenStr = responseToJsonString(tokenStr);
+            Debug.Log("authorizeClient(): tokenStr:" + tokenStr);
 
             cacheTokens(tokenStr);
         }
@@ -155,6 +167,8 @@ namespace BTCPayAPI
         /// <returns>A new invoice object returned from the server.</returns>
         public IEnumerator createInvoice(Invoice invoice, Action<Invoice> invoiceAction, String facade = FACADE_POS)
         {
+            Debug.Log("createInvoice(): Curr"+invoice.Currency+" Price:"+invoice.Price +" "+invoice.BuyerEmail+" "+invoice.ItemDesc);
+
             invoice.Token = this.getAccessToken(facade);//get token by facade type
             invoice.Guid = Guid.NewGuid().ToString();
             String json = JsonConvert.SerializeObject(invoice);
@@ -163,13 +177,19 @@ namespace BTCPayAPI
             CoroutineWithData cd = new CoroutineWithData(_owner, post("invoices", json,true));
             yield return cd.coroutine;
             string responseStr = (string)cd.result;
-            Debug.Log("createInvoice  response:" + responseStr);
+            Debug.Log("createInvoice():  response:" + responseStr);
+
             JsonConvert.PopulateObject(this.responseToJsonString(responseStr), invoice);
+            Debug.Log("createInvoice():  responsejson to Invoice Object done token1:id=" + invoice.Id + " token=" + invoice.Token + " json=" + JsonConvert.SerializeObject(invoice)+ " toString:"+invoice.ToString());
+            invoice = JsonConvert.DeserializeObject<Invoice>(this.responseToJsonString(responseStr));
+            Debug.Log("createInvoice():  responsejson to Invoice Object done token2:id=" + invoice.Id + " token=" + invoice.Token + " json="+ JsonConvert.SerializeObject(invoice) + " toString:" + invoice.ToString());
 
             // Track the token for this invoice
             cacheToken(invoice.Id, invoice.Token);
             //
+            Debug.Log("createInvoice():  Taking InvoiceAction callback BEFORE");
             invoiceAction(invoice);
+            Debug.Log("createInvoice():  Taking InvoiceAction callback AFTER");
         }
 
         /// <summary>
@@ -183,28 +203,31 @@ namespace BTCPayAPI
             // GET/invoices expects the merchant token and not the merchant/invoice token.
             Dictionary<string, string> parameters = null;
 //            if (facade == FACADE_MERCHANT)
-            {
+//            {
                 try
                 {
                     parameters = new Dictionary<string, string>();
 //                    parameters.Add("token", getAccessToken(FACADE_MERCHANT));
                     parameters.Add("token", getAccessToken(facade));
-                }
-                catch (BitPayException)
-                {
-                    // No token for invoice.
-                    parameters = null;
-                }
+                    Debug.Log("getInvoice():  add param: token="+ getAccessToken(facade));
+
             }
+            catch (BitPayException)
+                {
+                // No token for invoice.
+                Debug.Log("getInvoice():  add param: NO TOKEN for "+ facade);
+                parameters = null;
+                }
+ //           }
             CoroutineWithData cd = new CoroutineWithData(_owner, get("invoices/" + invoiceId, parameters));
             yield return cd.coroutine;
             String invoiceStr = (string) cd.result;
-            //
-            Invoice invoice = JsonConvert.DeserializeObject<Invoice>(invoiceStr);
+            Debug.Log("getInvoice():  Invoice Json :" + invoiceStr);
+            Invoice invoice = JsonConvert.DeserializeObject<Invoice>(responseToJsonString(invoiceStr));
+
             invoiceAction(invoice);
 
         }
-
         /// <summary>
         /// Retrieve the exchange rate table using the public facade.
         /// </summary>
@@ -219,31 +242,9 @@ namespace BTCPayAPI
             ratesAction(new Rates(rates, this));
         }
 
-        /// <summary>
-        /// Retrieves a summary of the specified settlement.
-        /// </summary>
-        /// <param name="settlementId">Settlement Id</param>
-        /// <returns>A BitPay Settlement object.</returns>
-        public IEnumerator getSettlement(string settlementId, Action<Settlement> actionSettlement)
-        {
-            var parameters = new Dictionary<string, string>
-            {
-                { "token", getAccessToken(FACADE_MERCHANT) }
-            };
-
-            CoroutineWithData cd = new CoroutineWithData(_owner, get($"settlements/{settlementId}", parameters));
-            yield return cd.coroutine;
-            String settlementStr = (string)cd.result;
-
-            Settlement sett
-                = JsonConvert.DeserializeObject<Settlement>(settlementStr);
-
-            actionSettlement(sett);
-        }
-
-
         public IEnumerator listenInvoice(string invoiceId, Action<Invoice> actionOnInvoice)
         {
+            Debug.Log("listenInvoice(): websocket start : invoiceId=" + invoiceId);
             WebSocket w = new WebSocket(new Uri("ws://echo.websocket.org"));
             yield return w.Connect();
             w.SendString("Hi there");
@@ -265,59 +266,120 @@ namespace BTCPayAPI
             }
             w.Close();
         }
-
-
         //public IEnumerator subscribeInvoice(string invoiceId, Action<Invoice> actionOnInvoice)
         //{
-        //    //CoroutineWithData cd = new CoroutineWithData(_owner, SubscribeInvoiceCoroutine(invoiceId));
-        //    //yield return cd.coroutine;
+        //    CoroutineWithData cd = new CoroutineWithData(_owner, SubscribeInvoiceCoroutine(invoiceId));
+        //    yield return cd.coroutine;
 
-        //    //Debug.Log("BtcPayUnity: Invoice Result is " + cd.result);
+        //    Debug.Log("BtcPayUnity: Invoice Result is " + cd.result);
 
-        //    //Invoice resultInv = (Invoice)cd.result;
-        //    //actionOnInvoice(resultInv);
-
-        //    yield return SubscribeInvoiceCoroutine(invoiceId, actionOnInvoice);
+        //    Invoice resultInv = (Invoice)cd.result;
+        //    actionOnInvoice(resultInv);
         //}
 
+        public IEnumerator SubscribeInvoiceCoroutine(string invoiceId, Action<Invoice> actionOnInvoice)
+        {
+            //WebSocket  loop
+            Debug.Log("SubscribeInvoiceCoroutine(): websocket start : invoiceId=" + invoiceId);
+            WebSocket ws = new WebSocket(new Uri("wss://" + _serverHost + "/i/" + invoiceId + "/status/ws"));
+            yield return ws.Connect();
+            Debug.Log("SubscribeInvoiceCoroutine(): websocket connected : invoiceId=" + invoiceId);
+            while (true)
+            {
+                string reply = ws.RecvString();
+                if (reply != null)
+                {
+                    Debug.Log("SubscribeInvoiceCoroutine(): Websocket Received: " + reply);
+                    yield return getInvoice(invoiceId, actionOnInvoice);
+                    break;
+                }
+                if (ws.error != null)
+                {
+                    Debug.Log("SubscribeInvoiceCoroutine(): Websocket Error: " + ws.error);
+                    break;
+                }
+                yield return 0;
+            }
+            ws.Close();
+            Debug.Log("SubscribeInvoiceCoroutine(): websocket closed : invoiceId=" + invoiceId);
+        }
+
         //        private IEnumerator SubscribeInvoiceCoroutine(string invoiceId, Action<Invoice> actionOnInvoice)
+        //{
+        //    Invoice inv = null;
+        //    using (var ws = new WebSocket("wss://" + _serverHost + "/i/" + invoiceId + "/status/ws"))
+        //    {
+        //        ws.SslConfiguration.EnabledSslProtocols = System.Security.Authentication.SslProtocols.Tls12;
+        //        ws.OnMessage += (sender, e) =>
         //        {
-        //            Invoice inv = null;
-        //            using (var ws = new WebSocket("wss://" + _serverHost + "/i/" + invoiceId + "/status/ws"))
-        //            {
-        //                ws.SslConfiguration.EnabledSslProtocols = System.Security.Authentication.SslProtocols.Tls12;
-        //                ws.OnMessage += (sender, e) =>
-        //                {
-        //                    Debug.Log("BtcPayUnity:WS Message: " + e.Data);
-        //                    //Get Invoice 
-        //                    //                inv = getInvoice(invoiceId, BTCPay.FACADE_MERCHANT);
-        //                    getInvoice(invoiceId,actionOnInvoice);//Default Pos facade
-        //                    Debug.Log("BtcPayUnity:Got invoice : " + inv.Status);
-        //                    ws.Close();
-        //                };
-        //                ws.OnClose += (sender, e) =>
-        //                {
-        //                    Debug.Log("BtcPayUnity:WS Closed: " + e.Code);
-        //                };
-        //                ws.OnError += (sender, e) =>
-        //                {
-        //                    Debug.Log("BtcPayUnity:WS Err: " + e.Exception);
-        //                };
-        //                ws.OnOpen += (sender, e) =>
-        //                  Debug.Log("BtcPayUnity:WS Opened.");
+        //            Debug.Log("BtcPayUnity:WS Message: " + e.Data);
+        //            //Get Invoice 
+        //            //                inv = getInvoice(invoiceId, BTCPay.FACADE_MERCHANT);
+        //            getInvoice(invoiceId, actionOnInvoice);//Default Pos facade
+        //            Debug.Log("BtcPayUnity:Got invoice : " + inv.Status);
+        //            ws.Close();
+        //        };
+        //        ws.OnClose += (sender, e) =>
+        //        {
+        //            Debug.Log("BtcPayUnity:WS Closed: " + e.Code);
+        //        };
+        //        ws.OnError += (sender, e) =>
+        //        {
+        //            Debug.Log("BtcPayUnity:WS Err: " + e.Exception);
+        //        };
+        //        ws.OnOpen += (sender, e) =>
+        //          Debug.Log("BtcPayUnity:WS Opened.");
 
-        //                ws.Connect();
+        //        ws.Connect();
 
-        //                //Wait connection is closed when invoice is gotten or exception
-        //                while (ws.IsAlive)
-        //                {
-        //                    //Thread.Sleep(500);
-        //                    yield return new WaitForSeconds(0.5f);
-        //                    Debug.Log("BtcPayUnity:Websocket Sleep/Yield 500ms.");
-        //                }
-        //            }//Auto Close websocket
-        ////            yield return inv;
+        //        //Wait connection is closed when invoice is gotten or exception
+        //        while (ws.IsAlive)
+        //        {
+        //            //Thread.Sleep(500);
+        //            yield return new WaitForSeconds(0.5f);
+        //            Debug.Log("BtcPayUnity:Websocket Sleep/Yield 500ms.");
         //        }
+        //    }//Auto Close websocket
+        //     //            yield return inv;
+        //}
+        //private IEnumerator SubscribeInvoiceCoroutine(string invoiceId, Action<Invoice> actionOnInvoice)
+        //{
+        //    Invoice inv = null;
+        //    using (var ws = new WebSocket("wss://" + _serverHost + "/i/" + invoiceId + "/status/ws"))
+        //    {
+        //        ws.SslConfiguration.EnabledSslProtocols = System.Security.Authentication.SslProtocols.Tls12;
+        //        ws.OnMessage += (sender, e) =>
+        //        {
+        //            Debug.Log("BtcPayUnity:WS Message: " + e.Data);
+        //            //Get Invoice 
+        //            //                inv = getInvoice(invoiceId, BTCPay.FACADE_MERCHANT);
+        //            getInvoice(invoiceId, actionOnInvoice);//Default Pos facade
+        //            Debug.Log("BtcPayUnity:Got invoice : " + inv.Status);
+        //            ws.Close();
+        //        };
+        //        ws.OnClose += (sender, e) =>
+        //        {
+        //            Debug.Log("BtcPayUnity:WS Closed: " + e.Code);
+        //        };
+        //        ws.OnError += (sender, e) =>
+        //        {
+        //            Debug.Log("BtcPayUnity:WS Err: " + e.Exception);
+        //        };
+        //        ws.OnOpen += (sender, e) =>
+        //          Debug.Log("BtcPayUnity:WS Opened.");
+
+        //        ws.Connect();
+
+        //        //Wait connection is closed when invoice is gotten or exception
+        //        while (ws.IsAlive)
+        //        {
+        //            //Thread.Sleep(500);
+        //            yield return new WaitForSeconds(0.5f);
+        //            Debug.Log("BtcPayUnity:Websocket Sleep/Yield 500ms.");
+        //        }
+        //    }//Auto Close websocket
+        //     //            yield return inv;
+        //}
 
 
 
@@ -333,28 +395,31 @@ namespace BTCPayAPI
         //    }
         //}
 
-        //private static Color32[] Encode(string textForEncoding,
-        //  int width, int height)
-        //{
-        //    var writer = new BarcodeWriter
-        //    {
-        //        Format = BarcodeFormat.QR_CODE,
-        //        Options = new QrCodeEncodingOptions
-        //        {
-        //            Height = height,
-        //            Width = width
-        //        }
-        //    };
-        //    return writer.Write(textForEncoding);
-        //}
-        //public Texture2D generateQR(string text)
-        //{
-        //    var encoded = new Texture2D(384, 384);
-        //    var color32 = Encode(text, encoded.width, encoded.height);
-        //    encoded.SetPixels32(color32);
-        //    encoded.Apply();
-        //    return encoded;
-        //}
+        private static Color32[] Encode(string textForEncoding,
+          int width, int height)
+        {
+
+            var writer = new BarcodeWriter
+            {
+                Format = BarcodeFormat.QR_CODE,
+                Options = new QrCodeEncodingOptions
+                {
+                    Height = height,
+                    Width = width
+                }
+            };
+            return writer.Write(textForEncoding);
+        }
+        public Texture2D generateQR(string text)
+        {
+            Debug.Log("generateQR():generateing Qr for text: " + text);
+
+            var encoded = new Texture2D(384, 384);
+            var color32 = Encode(text, encoded.width, encoded.height);
+            encoded.SetPixels32(color32);
+            encoded.Apply();
+            return encoded;
+        }
 
 
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -363,24 +428,39 @@ namespace BTCPayAPI
 
         private void initKeys()
         {
-            if (KeyUtils.privateKeyExists())
+
+
+            if (DataAccess.FileExists())//load from storage
             {
-                _ecKey = KeyUtils.loadEcKey();
+                Debug.Log("initKeys():privateKeyExists loading eckey");
+                //                _ecKey = KeyUtils.loadEcKey();
+                _ecKey = KeyUtils.loadNBEcKey();
 
                 // Alternatively, load your private key from a location you specify.
                 //_ecKey = KeyUtils.createEcKeyFromHexStringFile("C:\\Users\\Andy\\Documents\\private-key.txt");
             }
-            else
+            else//create a new private key and store
             {
-                _ecKey = KeyUtils.createEcKey();
-                KeyUtils.saveEcKey(_ecKey);
+                Debug.Log("initKeys(): Not privateKeyExists creating eckey");
+
+                //string privHexStr2 = "f356e8785923053e46422ad2c22fcb4f03f2cd0e6e33265bac16e314a7c26684";  //0.hard coded privkey
+                //byte[] bytes2 = KeyUtils.hexToBytes(privHexStr2);
+                //_ecKey = new Key(bytes2, -1, false);
+
+                //                _ecKey = KeyUtils.createEcKey();      //1.old ECkey
+                _ecKey = KeyUtils.createNBEcKey();      //2.Nbitcoin eckey
+                byte[] priv = _ecKey.ToBytes();
+                Debug.Log("initKeys(): ecKey:" + KeyUtils.bytesToHex(priv));
+                KeyUtils.saveEcKey(_ecKey);           //3.save geenrated one
             }
+            Debug.Log("initKeys(): End");
         }
 
         private void deriveIdentity()
         {
             // Identity in this implementation is defined to be the SIN.
             _identity = KeyUtils.deriveSIN(_ecKey);
+            Debug.Log("deriveIdentity(): identity is derived:"+_identity);
         }
 
         private Dictionary<string, string> responseToTokenCache(string responseStr)
@@ -390,38 +470,41 @@ namespace BTCPayAPI
             //sample response is, {"data":[{"pos":"G4AcnWpGtMDw2p1Ci1h1ommxUs4GJdzurbKFdLqCyLEv"}]}
             Debug.Log("responseToTokenCache():responseStr is " + responseStr);
 
-            dynamic obj = JsonConvert.DeserializeObject(responseToJsonString(responseStr));
-            
+//            dynamic obj = JsonConvert.DeserializeObject(responseToJsonString(responseStr));
+            List<Dictionary<string, string>> obj = JsonConvert.DeserializeObject<List<Dictionary<string, string>>>(responseToJsonString(responseStr));
+
             //            if (obj.GetType() != typeof(DynamicJsonArray))
-            if (obj.GetType() != typeof(JArray))//TODO Fix the Type CHECK
-            {
-                throw new BitPayException("Error: Response to GET /tokens is expected to be an array, got a " + obj.GetType());
-            }
+            //if (obj.GetType() != typeof(JArray))//TODO Fix the Type CHECK
+            //{
+            //    Debug.Log("Error: Response to GET /tokens is expected to be an array, got a " + obj.GetType());
+            //    throw new BitPayException("Error: Response to GET /tokens is expected to be an array, got a " + obj.GetType());
+            //}
             try
             {
-//                for (int i = 0; i < obj.Count; i++)
-                foreach(var kc in obj.Children())
+                foreach(var kc in obj)//each element of list
                 {
 //                    Dictionary<string, object>.KeyCollection kc = obj[i].GetDynamicMemberNames();
                     if (kc.Count > 1)
                     {
                         throw new BitPayException("Error: Size of Token object is unexpected.  Expected one entry, got " + kc.Count + " entries.");
                     }
-                    foreach (var entry in kc)
+                    foreach (var entry in kc) //each map
                     {
-                        if (!_tokenCache.ContainsKey(entry.Name))
+                        if (!_tokenCache.ContainsKey(entry.Key))
                         {
-                            cacheToken(entry.Name, entry.Value.Value);
+                            cacheToken(entry.Key, entry.Value);
                         }
                     }
                 }
             }
             catch (BitPayException ex)
             {
+                Debug.Log("BitPayException Error: "+ ex.ToString());
                 throw new BitPayException("Error: " + ex.ToString());
             }
             catch (Exception ex)
             {
+                Debug.Log("Error: response to GET /tokens could not be parsed - " + ex.ToString());
                 throw new BitPayException("Error: response to GET /tokens could not be parsed - " + ex.ToString());
             }
             return _tokenCache;
@@ -433,7 +516,10 @@ namespace BTCPayAPI
 
         private void cacheToken(String key, String token)
         {
+
+            Debug.Log("cacheToken():key:" + key+" value:"+token );
             _tokenCache.Add(key, token);
+            Debug.Log("cacheToken():token is stored in cache");
         }
 
         private IEnumerator tryGetAccessTokens()
@@ -499,27 +585,53 @@ namespace BTCPayAPI
             Debug.Log("get() is called with "+fullURL);
             Debug.Log("get() is called parameters:" + parameters.Count);
 
+            if (parameters != null)
+            {
+
+                fullURL += "?";
+                foreach (KeyValuePair<string, string> entry in parameters)
+                {
+                    Debug.Log("get():  getting URL parameter :" + entry.Key + "=" + entry.Value);
+                    fullURL += entry.Key + "=" + entry.Value + "&";
+                }
+                fullURL = fullURL.Substring(0, fullURL.Length - 1);
+            }
+
             using (UnityWebRequest httpClient = UnityWebRequest.Get(fullURL)) { 
 
                 httpClient.SetRequestHeader("x-accept-version", BITPAY_API_VERSION);
                 httpClient.SetRequestHeader("x-bitpay-plugin-info", BITPAY_PLUGIN_INFO);
-                if (parameters != null)
+//                httpClient.SetRequestHeader("Content-Type", "application/json");
+                    //                    String signature = KeyUtils.sign(_ecKey, fullURL);
+
+                //string signature = _ecKey.SignMessage(fullURL);
+                string text = fullURL;
+                byte[] singleHash = null;
+                using (var hash256 = SHA256.Create())
                 {
-                    fullURL += "?";
-                    foreach (KeyValuePair<string, string> entry in parameters)
-                    {
-                        fullURL += entry.Key + "=" + entry.Value + "&";
-                    }
-                    fullURL = fullURL.Substring(0, fullURL.Length - 1);
-                    String signature = KeyUtils.sign(_ecKey, fullURL);
-                    httpClient.SetRequestHeader("x-signature", signature);
-                    httpClient.SetRequestHeader("x-identity", KeyUtils.bytesToHex(_ecKey.PubKey));
+                    var bytes = Encoding.UTF8.GetBytes(text);
+                    singleHash = hash256.ComputeHash(bytes);
                 }
+                ECDSASignature eCDSA = _ecKey.Sign(new uint256(singleHash));
+                string newsig = KeyUtils.bytesToHex(eCDSA.ToDER());
+
+                httpClient.SetRequestHeader("x-signature", newsig );
+//                    httpClient.SetRequestHeader("x-signature", signature);
+                //                    byte[] pubkBytes = _ecKey.PubKey;
+                byte[] pubkBytes = _ecKey.PubKey.Decompress().ToBytes();
+                httpClient.SetRequestHeader("x-identity", KeyUtils.bytesToHex(pubkBytes));
+                Debug.Log("GET HEADER:URL+data =" + fullURL);
+                Debug.Log("GET HEADER:x-signature:" + newsig);
+                Debug.Log("GET HEADER:x-identity(hex pubk):" + KeyUtils.bytesToHex(pubkBytes));
 
                 yield return httpClient.SendWebRequest();// send request
                 yield return httpClient.downloadHandler.text; // return donwloadhandler
             }
-        }
+
+
+       }
+
+
 
         //private IEnumerator postWithSignature(String uri, String json)
         //{
@@ -542,10 +654,27 @@ namespace BTCPayAPI
                 httpClient.SetRequestHeader("Content-Type", "application/json");
                 if (signatureRequired)
                 {
-                    String signature = KeyUtils.sign(_ecKey, _baseUrl + uri + json);
-                    httpClient.SetRequestHeader("x-signature", signature);
-                    httpClient.SetRequestHeader("x-identity", KeyUtils.bytesToHex(_ecKey.PubKey));
+                    //String signature = KeyUtils.sign(_ecKey, _baseUrl + uri + json);
+                    string text = _baseUrl + uri + json;
+                    byte[] singleHash = null;
+                    using (var hash256 = SHA256.Create())
+                    {
+                        var bytes = Encoding.UTF8.GetBytes(text);
+                        singleHash = hash256.ComputeHash(bytes);
+                    }
+                    ECDSASignature eCDSA = _ecKey.Sign(new uint256(singleHash));
+                    string newsig = KeyUtils.bytesToHex(eCDSA.ToDER());
+
+                    httpClient.SetRequestHeader("x-signature", newsig);
+                    //                    byte[] pubkBytes = _ecKey.PubKey;
+                    byte[] pubkBytes = _ecKey.PubKey.Decompress().ToBytes();
+
+                    httpClient.SetRequestHeader("x-identity", KeyUtils.bytesToHex(pubkBytes));
+                    Debug.Log("POST HEADER:data:" + _baseUrl + uri + json);
+                    Debug.Log("POST HEADER:x-signature:" + newsig);
+                    Debug.Log("POST HEADER:x-identity(hex pubk):" + KeyUtils.bytesToHex(pubkBytes));
                 }
+
                 UploadHandlerRaw uH = new UploadHandlerRaw(System.Text.Encoding.UTF8.GetBytes(json));
                 httpClient.uploadHandler = uH;
                 httpClient.downloadHandler = (DownloadHandler)new DownloadHandlerBuffer();
@@ -606,48 +735,67 @@ namespace BTCPayAPI
             // Get the response as a dynamic object for detecting possible error(s) or data object.
             // An error(s) object raises an exception.
             // A data object has its content extracted (throw away the data wrapper object).
-            Debug.Log(" Json Response Detail:" + responseString);
+//            Debug.Log(" Json Response Detail:" + responseString);
 
-            dynamic obj = JsonConvert.DeserializeObject(responseString);
+//            dynamic obj = JsonConvert.DeserializeObject(responseString);
 
             // Check for error response.
-            if (dynamicObjectHasProperty(obj, "error"))
-            {
-                throw new BitPayException("Error: " + obj.error);
-            }
-            if (dynamicObjectHasProperty(obj, "errors"))
-            {
-                String message = "Multiple errors:";
-                foreach (var errorItem in obj.errors)
+//            if (dynamicObjectHasProperty(obj, "error"))
+            if (jsonHasString(responseString, "error"))
                 {
-                    message += "\n" + errorItem.error + " " + errorItem.param;
-                }
-                throw new BitPayException(message);
+                    Debug.Log(" responseToJsonString(): error ");
+                throw new BitPayException("Error: " + responseString);
             }
+            //            if (dynamicObjectHasProperty(obj, "errors"))
+            if (jsonHasString(responseString, "errors"))
+            {
+                Debug.Log(" responseToJsonString(): errors ");
+                String message = "Multiple errors:";
+                //foreach (var errorItem in obj.errors)
+                //{
+                //    message += "\n" + errorItem.error + " " + errorItem.param;
+                //}
+                throw new BitPayException(message + responseString);
+            }
+            Debug.Log(" responseToJsonString(): No Error ");
 
             // Check for and exclude a "data" object from the response.
-            if (dynamicObjectHasProperty(obj, "data"))
-            {
-                responseString = JObject.Parse(responseString).SelectToken("data").ToString();
+//            if (dynamicObjectHasProperty(obj, "data"))
+            if (jsonHasString(responseString, "data"))
+                {
+                    Debug.Log(" responseToJsonString(): data found in json1 :" + responseString);
+                    JObject jo = JObject.Parse(responseString);
+//                responseString = jo.SelectToken("data").ToString();
+                responseString = jo["data"].ToString();
+                Debug.Log(" responseToJsonString(): data found in json 2:" + responseString);
             }
-            return Regex.Replace(responseString, @"\r\n", "");
+            //            Debug.Log(" responseToJsonString(): replaceing carrage return to empty string responseString:"+ responseString);
+            //string cleanStr=  responseString.Replace("\r\n", "");
+            //Debug.Log(" responseToJsonString(): result:" + cleanStr);
+            //cleanStr = responseString.Replace(@"\r\n", "");
+            return responseString;
         }
 
-        private static bool dynamicObjectHasProperty(dynamic obj, string name)
+        private static bool jsonHasString(string json, string name)
         {
-            bool result = false;
-
-            //            if (obj.GetType() == typeof(DynamicJsonObject))
-            if (obj.GetType() == typeof(JObject))//TODO Fix the Type CHECK
-            {
-                var dataValue = obj["data"];
-                var errorValue = obj[name];
-                result = errorValue != null;
-                //Dictionary<string, object>.KeyCollection kc = obj.GetDynamicMemberNames();
-                //result = kc.Contains(name);
-            }
-            return result;
+            return json.Contains(name);
         }
+
+        //private static bool dynamicObjectHasProperty(dynamic obj, string name)
+        //{
+        //    bool result = false;
+
+        //    //            if (obj.GetType() == typeof(DynamicJsonObject))
+        //    if (obj.GetType() == typeof(JObject))//TODO Fix the Type CHECK
+        //    {
+        //        var dataValue = obj["data"];
+        //        var errorValue = obj[name];
+        //        result = errorValue != null;
+        //        //Dictionary<string, object>.KeyCollection kc = obj.GetDynamicMemberNames();
+        //        //result = kc.Contains(name);
+        //    }
+        //    return result;
+        //}
 
         private void IgnoreBadCertificates()
         {

@@ -95,6 +95,11 @@ namespace BTCPayAPI
         /// </summary>
         public byte[] ToAsn1()
         {
+            return ToAsn1(_priv.ToByteArray(),PubKey);
+        }
+
+        public static  byte[] ToAsn1(byte[] privBytes,byte[] pubBytes)
+        {
             using (var baos = new MemoryStream(400))
             {
                 using (var encoder = new Asn1OutputStream(baos))
@@ -107,7 +112,30 @@ namespace BTCPayAPI
                     // } ASN1_SEQUENCE_END(EC_PRIVATEKEY)
                     var seq = new DerSequenceGenerator(encoder);
                     seq.AddObject(new DerInteger(1)); // version
-                    seq.AddObject(new DerOctetString(_priv.ToByteArray()));
+                    seq.AddObject(new DerOctetString(privBytes));
+                    seq.AddObject(new DerTaggedObject(0, SecNamedCurves.GetByName("secp256k1").ToAsn1Object()));
+                    seq.AddObject(new DerTaggedObject(1, new DerBitString(pubBytes)));
+                    seq.Close();
+                }
+                return baos.ToArray();
+            }
+        }
+
+        public byte[] BytesToASN1(byte[] bytes)
+        {
+            using (var baos = new MemoryStream(400))
+            {
+                using (var encoder = new Asn1OutputStream(baos))
+                {
+                    // ASN1_SEQUENCE(EC_PRIVATEKEY) = {
+                    //   ASN1_SIMPLE(EC_PRIVATEKEY, version, LONG),
+                    //   ASN1_SIMPLE(EC_PRIVATEKEY, privateKey, ASN1_OCTET_STRING),
+                    //   ASN1_EXP_OPT(EC_PRIVATEKEY, parameters, ECPKPARAMETERS, 0),
+                    //   ASN1_EXP_OPT(EC_PRIVATEKEY, publicKey, ASN1_BIT_STRING, 1)
+                    // } ASN1_SEQUENCE_END(EC_PRIVATEKEY)
+                    var seq = new DerSequenceGenerator(encoder);
+                    seq.AddObject(new DerInteger(1)); // version
+                    seq.AddObject(new DerOctetString(bytes));
                     seq.AddObject(new DerTaggedObject(0, SecNamedCurves.GetByName("secp256k1").ToAsn1Object()));
                     seq.AddObject(new DerTaggedObject(1, new DerBitString(PubKey)));
                     seq.Close();
@@ -116,11 +144,11 @@ namespace BTCPayAPI
             }
         }
 
-        /// <summary>
-        /// Creates an ECKey given only the private key. This works because EC public keys are derivable from their
-        /// private keys by doing a multiply with the generator value.
-        /// </summary>
-        public EcKey(BigInteger privKey)
+            /// <summary>
+            /// Creates an ECKey given only the private key. This works because EC public keys are derivable from their
+            /// private keys by doing a multiply with the generator value.
+            /// </summary>
+            public EcKey(BigInteger privKey)
         {
             _priv = privKey;
             _pub = PublicKeyFromPrivate(privKey);
