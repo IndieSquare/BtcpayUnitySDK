@@ -3,7 +3,6 @@ using System;
 using System.Text;
 using System.IO;
 using System.Security.Cryptography;
-using Org.BouncyCastle.Asn1.Sec;
 using Org.BouncyCastle.Crypto.Digests;
 using Multiformats.Base;
 using UnityEngine;

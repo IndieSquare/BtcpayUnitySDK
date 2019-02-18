@@ -9,7 +9,7 @@
       <HintPath>..\..\..\..\..\Program Files\Unity2018\Editor\Data\Managed\UnityEngine.dll</HintPath>
     </Reference>
     <Reference Include="websocket-sharp">
-      <HintPath>..\..\..\websocket-sharp\websocket-sharp\bin\Debug_Ubuntu\websocket-sharp.dll</HintPath>
+      <HintPath>..\..\..\Unity\BTCPayUnity\Websocket-csharp-withUnityWebGLWebSocket\websocket-sharp.dll</HintPath>
     </Reference>
   </ItemGroup>
 

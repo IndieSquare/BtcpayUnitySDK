@@ -89,11 +89,9 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\..\..\Program Files\Unity2018\Editor\Data\Managed\UnityEngine.dll</HintPath>
     </Reference>
-    <Reference Include="websocket-sharp">
-      <HintPath>..\..\..\websocket-sharp\websocket-sharp\bin\Debug_Ubuntu\websocket-sharp.dll</HintPath>
-    </Reference>
-    <Reference Include="WebSocketUnity">
-      <HintPath>..\..\..\Unity\WebSocketUnity\WebSocketUnity\bin\Debug\netstandard2.0\WebSocketUnity.dll</HintPath>
+    <Reference Include="WebSocketUnity, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\WebSocketUnity\bin\Debug\netstandard2.0\WebSocketUnity.dll</HintPath>
     </Reference>
     <Reference Include="zxing.unity">
       <HintPath>..\packages\zxing.unity.dll</HintPath>
