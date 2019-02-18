@@ -27,10 +27,14 @@ public class WebSocket
     public string RecvString()
     {
         byte[] retval = Recv();
-        Debug.Log("WebSocket.RecvString() non-WebGL: received byte size 2" + (retval == null ? "null" : retval.Length+"" ));
+//        Debug.Log("WebSocket.RecvString() non-WebGL: received byte size " + (retval == null ? "null" : retval.Length+"" ));
         if (retval == null)
             return null;
         return Encoding.UTF8.GetString(retval);
+    }
+    public string GetPlatform()
+    {
+        return "non-WEBGL";
     }
 
 
@@ -51,7 +55,7 @@ public class WebSocket
 
         while (!m_IsConnected && m_Error == null)
         {
-            Debug.Log("WebSocket.Connect() non-WebGL: Connecting:");
+            //Debug.Log("WebSocket.Connect() non-WebGL: Connecting:");
             yield return 0;
         }
 
@@ -67,10 +71,10 @@ public class WebSocket
     {
         if (m_Messages.Count == 0)
         {
-            Debug.Log("WebSocket.Recv() non-WebGL: m_Messages.Count 1:"+ m_Messages.Count);
+//            Debug.Log("WebSocket.Recv() non-WebGL: m_Messages.Count 1:"+ m_Messages.Count);
             return null;
         }
-        Debug.Log("WebSocket.Recv() non-WebGL: m_Messages.Count 2:" + m_Messages.Count);
+ //       Debug.Log("WebSocket.Recv() non-WebGL: m_Messages.Count 2:" + m_Messages.Count);
         return m_Messages.Dequeue();
     }
 

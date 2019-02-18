@@ -282,17 +282,25 @@ namespace BTCPayAPI
             //WebSocket  loop
             Debug.Log("SubscribeInvoiceCoroutine(): websocket start : invoiceId=" + invoiceId);
             WebSocket ws = new WebSocket(new Uri("wss://" + _serverHost + "/i/" + invoiceId + "/status/ws"));
+            Debug.Log("SubscribeInvoiceCoroutine(): websocket before connection : WebSocket Platform=" + ws.GetPlatform());
             yield return ws.Connect();
-            Debug.Log("SubscribeInvoiceCoroutine(): websocket connected : invoiceId=" + invoiceId);
+            Debug.Log("SubscribeInvoiceCoroutine(): websocket connected : invoiceId=" + invoiceId +" ws:"+ws.ToString());
             while (true)
             {
+//                Debug.Log("SubscribeInvoiceCoroutine(): Websocket Loop ");
                 string reply = ws.RecvString();
+//                Debug.Log("SubscribeInvoiceCoroutine(): Websocket Loop after s.RecvString() ");
                 if (reply != null)
                 {
-                    Debug.Log("SubscribeInvoiceCoroutine(): Websocket Received: " + reply);
+                  //  Debug.Log("SubscribeInvoiceCoroutine(): Websocket Received: " + reply);
                     yield return getInvoice(invoiceId, actionOnInvoice);
                     break;
                 }
+                else
+                {
+                 //   Debug.Log("SubscribeInvoiceCoroutine(): Websocket Received:  null" );
+                }
+
                 if (ws.error != null)
                 {
                     Debug.Log("SubscribeInvoiceCoroutine(): Websocket Error: " + ws.error);

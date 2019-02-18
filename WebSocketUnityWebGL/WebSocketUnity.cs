@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Net;
-using System.Net.Sockets;
 using System.Text;
 using System.Collections;
 using UnityEngine;
@@ -15,6 +11,7 @@ public class WebSocket
     public WebSocket(Uri url)
     {
         mUrl = url;
+        Debug.Log("WebSocket.Constructor WebGL: url: "+url);
 
         string protocol = mUrl.Scheme;
         if (!protocol.Equals("ws") && !protocol.Equals("wss"))
@@ -29,10 +26,14 @@ public class WebSocket
     public string RecvString()
     {
         byte[] retval = Recv();
-        Debug.Log("WebSocket.RecvString() WebGL: received byte size " + retval == null ? "null" : retval.Length + "");
+//        Debug.Log("WebSocket.RecvString() WebGL: received byte size " + retval == null ? "null" : retval.Length + "");
         if (retval == null)
             return null;
         return Encoding.UTF8.GetString(retval);
+    }
+    public string GetPlatform()
+    {
+        return "WEBGL";
     }
 
     //#if UNITY_WEBGL && !UNITY_EDITOR
@@ -76,6 +77,7 @@ public class WebSocket
 
     public IEnumerator Connect()
     {
+        Debug.Log("WebSocket.Connect() WebGL: start ");
         m_NativeRef = SocketCreate(mUrl.ToString());
 
         while (SocketState(m_NativeRef) == 0)
@@ -101,46 +103,4 @@ public class WebSocket
             return Encoding.UTF8.GetString(buffer);
         }
     }
-    //#else
-    //    WebSocketSharp.WebSocket m_Socket;
-    //    Queue<byte[]> m_Messages = new Queue<byte[]>();
-    //    bool m_IsConnected = false;
-    //    string m_Error = null;
-
-    //    public IEnumerator Connect()
-    //    {
-    //        m_Socket = new WebSocketSharp.WebSocket(mUrl.ToString());
-    //        m_Socket.OnMessage += (sender, e) => m_Messages.Enqueue(e.RawData);
-    //        m_Socket.OnOpen += (sender, e) => m_IsConnected = true;
-    //        m_Socket.OnError += (sender, e) => m_Error = e.Message;
-    //        m_Socket.ConnectAsync();
-    //        while (!m_IsConnected && m_Error == null)
-    //            yield return 0;
-    //    }
-
-    //    public void Send(byte[] buffer)
-    //    {
-    //        m_Socket.Send(buffer);
-    //    }
-
-    //    public byte[] Recv()
-    //    {
-    //        if (m_Messages.Count == 0)
-    //            return null;
-    //        return m_Messages.Dequeue();
-    //    }
-
-    //    public void Close()
-    //    {
-    //        m_Socket.Close();
-    //    }
-
-    //    public string error
-    //    {
-    //        get
-    //        {
-    //            return m_Error;
-    //        }
-    //    }
-    //#endif 
 }
