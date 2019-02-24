@@ -11,11 +11,13 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BtcPayClientSample", "BtcPa
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{5318CC2B-36CF-42E4-A3A3-6E09187F9887}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebSocketUnity", "WebSocketUnity\WebSocketUnity.csproj", "{0CBFF27F-880E-43B6-B487-891823AD2F49}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebSocketUnity", "WebSocketUnity\WebSocketUnity.csproj", "{0CBFF27F-880E-43B6-B487-891823AD2F49}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebSocketUnityWebGL", "WebSocketUnityWebGL\WebSocketUnityWebGL.csproj", "{E12173CE-44FF-4A03-A23D-A6EA1E3E5B25}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebSocketUnityWebGL", "WebSocketUnityWebGL\WebSocketUnityWebGL.csproj", "{E12173CE-44FF-4A03-A23D-A6EA1E3E5B25}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DataAccessUnity", "DataAccessUnity\DataAccessUnity.csproj", "{1E563C65-6FA8-49EE-A397-7396F8DBE980}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DataAccessUnity", "DataAccessUnity\DataAccessUnity.csproj", "{1E563C65-6FA8-49EE-A397-7396F8DBE980}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ResourcesDataAccess", "DataAccessInAsset\ResourcesDataAccess.csproj", "{EBF9FF72-EB54-41B0-B35C-B111482B4ADA}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -47,6 +49,10 @@ Global
 		{1E563C65-6FA8-49EE-A397-7396F8DBE980}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1E563C65-6FA8-49EE-A397-7396F8DBE980}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1E563C65-6FA8-49EE-A397-7396F8DBE980}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EBF9FF72-EB54-41B0-B35C-B111482B4ADA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EBF9FF72-EB54-41B0-B35C-B111482B4ADA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EBF9FF72-EB54-41B0-B35C-B111482B4ADA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EBF9FF72-EB54-41B0-B35C-B111482B4ADA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

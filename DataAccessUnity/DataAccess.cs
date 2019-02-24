@@ -4,6 +4,13 @@ using System.Runtime.InteropServices;
 using System.Runtime.Serialization.Formatters.Binary;
 using UnityEngine;
 
+/**
+* 
+*  This class deals with storing data in user level.
+*  It stores file in User's folder specified by Unity spec.
+*  https://docs.unity3d.com/ScriptReference/Application-persistentDataPath.html
+*  This class handles both non-webGL and webGL.
+*/
 public class DataAccess
 {
     [DllImport("__Internal")]

@@ -30,6 +30,7 @@ namespace BTCPayAPI
 
         public static Key createNBEcKey()
         {
+            Debug.Log("createNBEcKey() Constructor");
             //Default constructor uses SecureRandom numbers.
             return new Key();
         }
@@ -65,12 +66,22 @@ namespace BTCPayAPI
 
         public static Key loadNBEcKey()
         {
-            string base58 = DataAccess.Load();
+            string base58 = ResourcesDataAccess.Load();
             byte[] b = new Base58Encoding().Decode(base58);
-            Debug.Log("loadEcKey():Base58 of prvkey:" + base58);
             EcKey key = EcKey.FromAsn1(b);
             return new Key(key.GetPrivKeyBytes());
         }
+
+        //public static Key loadNBEcKey()
+        //{
+        //    string base58 = DataAccess.Load();
+        //    byte[] b = new Base58Encoding().Decode(base58);
+        //    Debug.Log("loadEcKey():Base58 of prvkey:" + base58);
+        //    EcKey key = EcKey.FromAsn1(b);
+        //    return new Key(key.GetPrivKeyBytes());
+        //}
+
+
         //public static Key loadNBEcKey()
         //{
         //    using (FileStream fs = File.OpenRead(PRIV_KEY_FILENAME))
@@ -117,9 +128,19 @@ namespace BTCPayAPI
             byte[] bytes = EcKey.ToAsn1(nbEcKey.ToBytes(), nbEcKey.PubKey.ToBytes());
             string base58 = new Base58Encoding().Encode(bytes);
 
-            DataAccess.Save(base58);
+            ResourcesDataAccess.Save(base58);
             Debug.Log("saveEcKey():end");
         }
+        //public static void saveEcKey(Key nbEcKey)
+        //{
+        //    Debug.Log("saveEcKey():start");
+
+        //    byte[] bytes = EcKey.ToAsn1(nbEcKey.ToBytes(), nbEcKey.PubKey.ToBytes());
+        //    string base58 = new Base58Encoding().Encode(bytes);
+
+        //    DataAccess.Save(base58);
+        //    Debug.Log("saveEcKey():end");
+        //}
         //public static void saveEcKey(Key nbEcKey)
         //{
         //    Debug.Log("saveEcKey():start");

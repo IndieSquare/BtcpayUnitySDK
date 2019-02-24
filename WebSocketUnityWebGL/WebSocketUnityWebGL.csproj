@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <AssemblyName>WebSocketUnity</AssemblyName>
-    <RootNamespace>WebSocketUnity</RootNamespace>
+    <RootNamespace>BTCPayAPI</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>

@@ -438,7 +438,7 @@ namespace BTCPayAPI
         {
 
 
-            if (DataAccess.FileExists())//load from storage
+            if (ResourcesDataAccess.FileExists())//load from storage
             {
                 Debug.Log("initKeys():privateKeyExists loading eckey");
                 //                _ecKey = KeyUtils.loadEcKey();
@@ -453,12 +453,12 @@ namespace BTCPayAPI
 
                 //string privHexStr2 = "f356e8785923053e46422ad2c22fcb4f03f2cd0e6e33265bac16e314a7c26684";  //0.hard coded privkey
                 //byte[] bytes2 = KeyUtils.hexToBytes(privHexStr2);
-                //_ecKey = new Key(bytes2, -1, false);
+                //_ecKey = new Key(bytes2, -1, false)
 
                 //                _ecKey = KeyUtils.createEcKey();      //1.old ECkey
                 _ecKey = KeyUtils.createNBEcKey();      //2.Nbitcoin eckey
                 byte[] priv = _ecKey.ToBytes();
-                Debug.Log("initKeys(): ecKey:" + KeyUtils.bytesToHex(priv));
+                //Debug.Log("initKeys(): ecKey:" + KeyUtils.bytesToHex(priv));
                 KeyUtils.saveEcKey(_ecKey);           //3.save geenrated one
             }
             Debug.Log("initKeys(): End");
