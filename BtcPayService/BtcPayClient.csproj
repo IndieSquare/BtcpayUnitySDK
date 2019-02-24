@@ -131,6 +131,10 @@
     </None>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\DataAccessInAsset\ResourcesDataAccess.csproj">
+      <Project>{ebf9ff72-eb54-41b0-b35c-b111482b4ada}</Project>
+      <Name>ResourcesDataAccess</Name>
+    </ProjectReference>
     <ProjectReference Include="..\DataAccessUnity\DataAccessUnity.csproj">
       <Project>{1e563c65-6fa8-49ee-a397-7396f8dbe980}</Project>
       <Name>DataAccessUnity</Name>

@@ -25,8 +25,9 @@ public class WebSocket
 
     public string RecvString()
     {
+ //       Debug.Log("WebSocket.RecvString() WebGL: start");
         byte[] retval = Recv();
-//        Debug.Log("WebSocket.RecvString() WebGL: received byte size " + retval == null ? "null" : retval.Length + "");
+ //       Debug.Log("WebSocket.RecvString() WebGL: received byte size " + (retval == null ? "null" : retval.Length + ""));
         if (retval == null)
             return null;
         return Encoding.UTF8.GetString(retval);
@@ -81,7 +82,10 @@ public class WebSocket
         m_NativeRef = SocketCreate(mUrl.ToString());
 
         while (SocketState(m_NativeRef) == 0)
+        {
             yield return 0;
+        }
+        Debug.Log("WebSocket.Connect() WebGL: finished ");
     }
 
     public void Close()
