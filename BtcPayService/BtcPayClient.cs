@@ -28,8 +28,7 @@ namespace BTCPayAPI
         private const String BITPAY_API_VERSION = "2.0.0";
         private const String BITPAY_PLUGIN_INFO = "BTCPay CSharp Client " + BITPAY_API_VERSION;
 
-        public const String FACADE_POS = "pos";
-        //public const String FACADE_MERCHANT = "merchant";
+        public const String FACADE_MERCHANT = "merchant";
         //public const String FACADE_USER = "user";
 
         private String _serverHost = null;
@@ -91,11 +90,11 @@ namespace BTCPayAPI
             deriveIdentity();//compute SIN number from pubkey
             yield return tryGetAccessTokens();
 
-            // Is this client already authorized to use the POS facade?
-            if (!clientIsAuthorized(BTCPayClient.FACADE_POS))
+            // Is this client already authorized to use the MERCHANT facade?
+            if (!clientIsAuthorized(BTCPayClient.FACADE_MERCHANT))
             {
                 Debug.Log("initialize():client Not authorized yet.Getting authorized.");
-                // Get POS facade authorization.
+                // Get MERCHANT facade authorization.
                 yield return authorizeClient(_pairingCode);
             }
             else
@@ -165,7 +164,7 @@ namespace BTCPayAPI
         /// </summary>
         /// <param name="invoice">An invoice request object.</param>
         /// <returns>A new invoice object returned from the server.</returns>
-        public IEnumerator createInvoice(Invoice invoice, Action<Invoice> invoiceAction, String facade = FACADE_POS)
+        public IEnumerator createInvoice(Invoice invoice, Action<Invoice> invoiceAction, String facade = FACADE_MERCHANT)
         {
             Debug.Log("createInvoice(): Curr"+invoice.Currency+" Price:"+invoice.Price +" "+invoice.BuyerEmail+" "+invoice.ItemDesc);
 
@@ -197,7 +196,7 @@ namespace BTCPayAPI
         /// </summary>
         /// <param name="invoiceId">The id of the requested invoice.</param>
         /// <returns>The invoice object retrieved from the server.</returns>
-        public IEnumerator getInvoice(String invoiceId, Action<Invoice> invoiceAction, String facade = FACADE_POS)
+        public IEnumerator getInvoice(String invoiceId, Action<Invoice> invoiceAction, String facade = FACADE_MERCHANT)
         {
             // Provide the merchant token when the merchant facade is being used.
             // GET/invoices expects the merchant token and not the merchant/invoice token.
@@ -323,7 +322,7 @@ namespace BTCPayAPI
         //            Debug.Log("BtcPayUnity:WS Message: " + e.Data);
         //            //Get Invoice 
         //            //                inv = getInvoice(invoiceId, BTCPay.FACADE_MERCHANT);
-        //            getInvoice(invoiceId, actionOnInvoice);//Default Pos facade
+        //            getInvoice(invoiceId, actionOnInvoice);//Default MERCHANT facade
         //            Debug.Log("BtcPayUnity:Got invoice : " + inv.Status);
         //            ws.Close();
         //        };
@@ -361,7 +360,7 @@ namespace BTCPayAPI
         //            Debug.Log("BtcPayUnity:WS Message: " + e.Data);
         //            //Get Invoice 
         //            //                inv = getInvoice(invoiceId, BTCPay.FACADE_MERCHANT);
-        //            getInvoice(invoiceId, actionOnInvoice);//Default Pos facade
+        //            getInvoice(invoiceId, actionOnInvoice);//Default MERCHANT facade
         //            Debug.Log("BtcPayUnity:Got invoice : " + inv.Status);
         //            ws.Close();
         //        };
@@ -475,7 +474,7 @@ namespace BTCPayAPI
         {
             // The response is expected to be an array of key/value pairs (facade name = token).
             //            dynamic obj = JsonConvert.DeserializeObject(responseToJsonString(response));
-            //sample response is, {"data":[{"pos":"G4AcnWpGtMDw2p1Ci1h1ommxUs4GJdzurbKFdLqCyLEv"}]}
+            //sample response is, {"data":[{"MERCHANT":"G4AcnWpGtMDw2p1Ci1h1ommxUs4GJdzurbKFdLqCyLEv"}]}
             Debug.Log("responseToTokenCache():responseStr is " + responseStr);
 
 //            dynamic obj = JsonConvert.DeserializeObject(responseToJsonString(responseStr));
